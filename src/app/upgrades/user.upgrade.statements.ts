@@ -1,10 +1,10 @@
 export class UserUpgradeStatements {
     userUpgrades = [
         {
-        toVersion: 1,
-        statements: [
-            `PRAGMA foreign_keys = ON;`,
-            `CREATE TABLE IF NOT EXISTS customers(
+            toVersion: 3,
+            statements: [
+                `PRAGMA foreign_keys = ON;`,
+                `CREATE TABLE IF NOT EXISTS customers(
             id INTEGER PRIMARY KEY,
             areaNo INTEGER NOT NULL,
             lastInvoiceDate,
@@ -17,7 +17,7 @@ export class UserUpgradeStatements {
             addr1 TEXT,
             addr2 TEXT
             );`,
-            `CREATE TABLE IF NOT EXISTS invoices(
+                `CREATE TABLE IF NOT EXISTS invoices(
             invoiceNo INTEGER PRIMARY KEY,
             orderNo INTEGER UNIQUE NOT NULL,
             custNo INTEGER NOT NULL,
@@ -40,7 +40,7 @@ export class UserUpgradeStatements {
             totalVat_adjup REAL,
             FOREIGN KEY (custNo) REFERENCES customers(id) ON DELETE CASCADE
             );`,
-            `CREATE TABLE IF NOT EXISTS invoiceitems(
+                `CREATE TABLE IF NOT EXISTS invoiceitems(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             itemNo INTEGER NOT NULL,
             numPerPack REAL,
@@ -56,16 +56,26 @@ export class UserUpgradeStatements {
             discount REAL,
             creditNotes INTEGER,
             FOREIGN KEY (orderNo) REFERENCES invoices(orderNo) ON DELETE CASCADE
-            );`
-        ]
+            );`,
+           `CREATE TABLE IF NOT EXISTS items(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            itemNo INTEGER NOT NULL,
+            qty REAL NOT NULL,
+            price REAL NOT NULL,
+            frequency NULLABLE,
+            storedPrice REAL NOT NULL,
+            packs REAL NOT NULL,
+            numPerPack REAL NOT NULL
+            );`,
+            ]
         },
         //{
-            /*
-        toVersion: 2,
-        statements: [
-            
-        ]
-            */
-       // },
+        /*
+    toVersion: 2,
+    statements: [
+        
+    ]
+        */
+        // },
     ]
 }    

@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { StorageService } from './storage.service';
 import { Customer } from '../../models/customer';
+import { item } from '../../models/item';
 import { InvoiceItem } from '../../models/invoice_item';
 import { Invoice } from '../../models/invoice';
 import { HttpClient } from '@angular/common/http';
@@ -14,10 +15,11 @@ export class DataService {
   private customerList: Customer[] = [];
   private invoiceItemList: InvoiceItem[] = [];
   private invoiceList: Invoice[] = [];
+  private items: item[] = [];
 
   constructor(private storage: StorageService, private http: HttpClient) {}
 
-  async fetchData(date: string, route: string) {
+ /* async fetchData(date: string, route: string) {
     const url = `${this.baseURL}/${date}/${route}`
 
     this.http.get(url).subscribe({
@@ -48,6 +50,40 @@ export class DataService {
       error: (error) => console.log("Ionic Error requesting: ", error.message)
     });
   }
+*/
+async fetchData(date: string, route: string) {
+  const url = `${this.baseURL}/${date}/${route}`;
+
+  this.http.get(url).subscribe({
+    next: async (data) => {
+      console.log("Ionic Response Received");
+
+      // ✅ Get only the first customer/invoice item
+      const customers_items = (data as any).customer_details;
+      const firstRecord = customers_items?.[0];
+
+      if (firstRecord) {
+        if (this.checkRecord(firstRecord) === 'customer') {
+          this.pushCustomer(firstRecord);
+        } else {
+          this.pushInvoiceItem(firstRecord);
+        }
+      }
+
+      // ✅ Get only the first invoice
+      const invoices = (data as any).invoice_master;
+      const firstInvoice = invoices?.[0];
+      if (firstInvoice) {
+        this.pushInvoice(firstInvoice);
+      }
+
+      this.mapCust(); // still needed if you're linking customer IDs
+      await this.store(); // stores just 1 record per list now
+    },
+    error: (error) => console.log("Ionic Error requesting: ", error.message)
+  });
+}
+
 
   checkRecord(record: any) {
     if ('company' in record.attributes) {
@@ -112,6 +148,19 @@ export class DataService {
       'totalVat': invoice.attributes.totalvat,
       'totalVat_adjdown': invoice.attributes.totalvat_adjdown,
       'totalVat_adjup': invoice.attributes.totalvat_adjup
+    });
+  }
+
+  pushItem(item: any) {
+    this.items.push({
+      'itemNo': item.attributes.itemno,
+      'numPerPack': item.attributes.num_per_pack,
+      'frequency': item.attributes.frequency,
+      'packs': item.attributes.packs,
+      'qty': item.attributes.qty,
+      'price': item.attributes.storedprice,
+      'storedPrice': item.attributes.storedprice
+      
     });
   }
 
