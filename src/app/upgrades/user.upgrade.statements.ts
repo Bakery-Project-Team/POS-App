@@ -1,7 +1,7 @@
 export class UserUpgradeStatements {
     userUpgrades = [
         {
-            toVersion: 3,
+            toVersion: 4,
             statements: [
                 `PRAGMA foreign_keys = ON;`,
                 `CREATE TABLE IF NOT EXISTS customers(
@@ -57,7 +57,7 @@ export class UserUpgradeStatements {
             creditNotes INTEGER,
             FOREIGN KEY (orderNo) REFERENCES invoices(orderNo) ON DELETE CASCADE
             );`,
-           `CREATE TABLE IF NOT EXISTS items(
+           `CREATE TABLE IF NOT EXISTS inventory(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             itemNo INTEGER NOT NULL,
             qty REAL NOT NULL,

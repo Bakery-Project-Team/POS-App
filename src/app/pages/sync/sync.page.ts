@@ -5,7 +5,7 @@ import { IonicModule, LoadingController } from '@ionic/angular';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { DataService } from 'src/app/services/database/data.service';
 import { ToastController } from '@ionic/angular';
-
+import { Inventory } from 'src/app/models/inventory'; // Added import for Inventory type
 
 @Component({
   selector: 'app-sync',
@@ -23,14 +23,14 @@ export class SyncPage implements OnInit {
   ngOnInit() {
   }
 
-  minDate = '2024-08-01'
+  minDate = '2024-09-2'
   // get minDate() {
   //   const min = new Date();
   //   min.setDate(min.getDate() - 14);
   //   return min.toISOString().split('T')[0];
   // }
 
-  maxDate = '2024-09-20'
+  maxDate = '2024-09-2'
   // get maxDate() {
   //   const max = new Date();
   //   max.setDate(max.getDate() + 7);
@@ -52,10 +52,17 @@ export class SyncPage implements OnInit {
     try {
       const route = `route${this.routeNo}`
       this.data.fetchData(this.selectedDate, route);
+      // Added snippet below, adjusted for context
+      const invoiceNo = 913468; // The invoice number you want to filter by
+      this.data.fetchData(this.selectedDate, route, invoiceNo).then((inventory: Inventory[]) => {
+        console.log(`Inventory for Invoice ${invoiceNo}:`, inventory);
+      }).catch((error) => {
+        console.error('Error fetching inventory:', error);
+      });
     } catch(err) {
       console.log('Ionic Download failed: ', err);
     } finally {
-        await loading.dismiss();
-      }
+      await loading.dismiss();
     }
+  }
 }

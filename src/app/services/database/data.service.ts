@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { StorageService } from './storage.service';
 import { Customer } from '../../models/customer';
-import { item } from '../../models/item';
+import { Inventory } from '../../models/inventory';
 import { InvoiceItem } from '../../models/invoice_item';
 import { Invoice } from '../../models/invoice';
 import { HttpClient } from '@angular/common/http';
@@ -15,7 +15,8 @@ export class DataService {
   private customerList: Customer[] = [];
   private invoiceItemList: InvoiceItem[] = [];
   private invoiceList: Invoice[] = [];
-  private items: item[] = [];
+  private inventoryList: Inventory[] = [];
+  //inventory: Inventory;
 
   constructor(private storage: StorageService, private http: HttpClient) {}
 
@@ -51,36 +52,100 @@ export class DataService {
     });
   }
 */
-async fetchData(date: string, route: string) {
-  const url = `${this.baseURL}/${date}/${route}`;
+async fetchData(date: string, route: string, targetInvoiceNo?: number): Promise<Inventory[]> {
+  const url = targetInvoiceNo
+    ? `http://3.208.13.82:2078/akiproorders/invoiceinventory/${targetInvoiceNo}`
+    : `http://3.208.13.82:2078/akiproorders/downloadinvoices/${date}/${route}`;
+  console.log(`Fetching data from URL: ${url}`);
 
-  this.http.get(url).subscribe({
-    next: async (data) => {
-      console.log("Ionic Response Received");
+  return new Promise((resolve, reject) => {
+    this.http.get(url).subscribe({
+      next: async (data) => {
+        console.log("Ionic Response Received");
+        console.log("Raw API Response:", JSON.stringify(data, null, 2));
 
-      // ✅ Get only the first customer/invoice item
-      const customers_items = (data as any).customer_details;
-      const firstRecord = customers_items?.[0];
+        // Initialize inventory list for export
+        const inventoryExport: Inventory[] = [];
 
-      if (firstRecord) {
-        if (this.checkRecord(firstRecord) === 'customer') {
-          this.pushCustomer(firstRecord);
+        // Process customer_details
+        const customers_items = (data as any).customer_details;
+        console.log("Customer Details (Raw):", customers_items);
+
+        if (customers_items?.length) {
+          customers_items.forEach((record: any) => {
+            const recordType = this.checkRecord(record);
+            console.log("Record Type:", recordType);
+
+            if (recordType === 'customer') {
+              this.pushCustomer(record);
+              console.log("Customer List after push:", this.customerList);
+            } else {
+              this.pushInvoiceItem(record);
+              console.log("Invoice Item List after push:", this.invoiceItemList);
+            }
+          });
         } else {
-          this.pushInvoiceItem(firstRecord);
+          console.log("No customer_items records found.");
         }
-      }
 
-      // ✅ Get only the first invoice
-      const invoices = (data as any).invoice_master;
-      const firstInvoice = invoices?.[0];
-      if (firstInvoice) {
-        this.pushInvoice(firstInvoice);
-      }
+        // Process invoice_master
+        const invoices = (data as any).invoice_master;
+        if (invoices?.length) {
+          invoices.forEach((record: any) => {
+            this.pushInvoice(record);
+          });
+          console.log("Invoice List after push:", this.invoiceList);
+        } else {
+          console.log("No invoices found.");
+        }
 
-      this.mapCust(); // still needed if you're linking customer IDs
-      await this.store(); // stores just 1 record per list now
-    },
-    error: (error) => console.log("Ionic Error requesting: ", error.message)
+        // Process invoice_items for inventory export
+        const invoiceItems = (data as any).invoice_items;
+        if (invoiceItems?.length) {
+          let targetOrderNo: number | undefined;
+          if (targetInvoiceNo) {
+            const matchingInvoice = invoices?.find(
+              (inv: any) => inv.attributes.invoiceno === targetInvoiceNo
+            );
+            targetOrderNo = matchingInvoice?.attributes.orderno;
+            console.log(`Target Invoice ${targetInvoiceNo} maps to OrderNo: ${targetOrderNo}`);
+          }
+
+          invoiceItems.forEach((item: any) => {
+            const attributes = item.attributes;
+            console.log(`Checking item ${attributes.itemno} with orderno ${attributes.orderno}`);
+            if (!targetInvoiceNo || attributes.orderno === targetOrderNo) {
+              console.log(`Including item ${attributes.itemno}`);
+              const inventoryItem: Inventory = {
+                itemNo: attributes.itemno,
+                qty: attributes.qty,
+                price: attributes.storedprice,
+                frequency: 1,
+                storedPrice: attributes.storedprice,
+                packs: attributes.packs,
+                numPerPack: attributes.num_per_pack
+              };
+              inventoryExport.push(inventoryItem);
+            } else {
+              console.log(`Excluding item ${attributes.itemno} (orderno ${attributes.orderno} != ${targetOrderNo})`);
+            }
+          });
+          console.log("Inventory Export:", inventoryExport);
+        } else {
+          console.log("No invoice items found for inventory export.");
+        }
+
+        // Map customers and store data
+        this.mapCust();
+        await this.store();
+
+        resolve(inventoryExport);
+      },
+      error: (error) => {
+        console.log("Ionic Error requesting:", error.message);
+        reject(error);
+      }
+    });
   });
 }
 
@@ -151,15 +216,15 @@ async fetchData(date: string, route: string) {
     });
   }
 
-  pushItem(item: any) {
-    this.items.push({
-      'itemNo': item.attributes.itemno,
-      'numPerPack': item.attributes.num_per_pack,
-      'frequency': item.attributes.frequency,
-      'packs': item.attributes.packs,
-      'qty': item.attributes.qty,
-      'price': item.attributes.storedprice,
-      'storedPrice': item.attributes.storedprice
+  pushItem(inventory: any) {
+    this.inventoryList.push({
+      'itemNo': inventory.attributes.itemno,
+      'numPerPack': inventory.attributes.num_per_pack,
+      'frequency': inventory.attributes.frequency,
+      'packs': inventory.attributes.packs,
+      'qty': inventory.attributes.qty,
+      'price': inventory.attributes.storedprice,
+      'storedPrice': inventory.attributes.storedprice
       
     });
   }
@@ -178,5 +243,8 @@ async fetchData(date: string, route: string) {
     await this.storage.addCustomers(this.customerList);
     await this.storage.addInvoices(this.invoiceList);
     await this.storage.addInvoiceItems(this.invoiceItemList);
+    for (const item of this.inventoryList) {
+      await this.storage.addItem(item);
+    }
   }
 }

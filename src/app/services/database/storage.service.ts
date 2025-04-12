@@ -5,6 +5,7 @@ import { DbnameVersionService } from './dbname-version.service';
 import { UserUpgradeStatements } from '../../upgrades/user.upgrade.statements';
 import { Customer } from '../../models/customer';
 import { InvoiceItem } from '../../models/invoice_item';
+import { Inventory } from '../../models/inventory';
 import { Invoice } from '../../models/invoice';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { Toast } from '@capacitor/toast';
@@ -354,6 +355,20 @@ export class StorageService {
             this.returnsList.next([]);
         }
     }
+
+    async addItem(item: Inventory) {
+        const sql = `INSERT INTO items (itemNo, qty, price, storedPrice, packs, numPerPack)
+                     VALUES (?, ?, ?, ?, ?, ?);`;
+        await this.db.run(sql, [
+          item.itemNo,
+          item.qty,
+          item.price,
+          item.storedPrice,
+          item.packs,
+          item.numPerPack
+        ]);
+        await this.loadData();
+      }
 
     // Refreshes All Data
     async loadData() {
