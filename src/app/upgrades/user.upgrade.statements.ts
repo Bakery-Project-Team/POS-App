@@ -1,7 +1,7 @@
 export class UserUpgradeStatements {
     userUpgrades = [
         {
-        toVersion: 2,
+        toVersion: 3,
         statements: [
             `PRAGMA foreign_keys = ON;`,
             `CREATE TABLE IF NOT EXISTS invoices(
@@ -28,7 +28,7 @@ export class UserUpgradeStatements {
             );`,
             `CREATE TABLE IF NOT EXISTS invoiceitems(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            itemNo INTEGER NOT NULL,
+            itemNo INTEGER UNIQUE NOT NULL,
             numPerPack REAL,
             orderNo INTEGER NOT NULL,
             packs REAL,
@@ -42,7 +42,14 @@ export class UserUpgradeStatements {
             discount REAL,
             creditNotes INTEGER,
             FOREIGN KEY (orderNo) REFERENCES invoices(orderNo) ON DELETE CASCADE
+            );`,
+            `CREATE TABLE freq (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            itemNo INTEGER UNIQUE,
+            frequency INTEGER,
+            FOREIGN KEY (itemNo) REFERENCES invoiceitems(itemNo) ON DELETE CASCADE
             );`
+            
         ]
         },
         //{
