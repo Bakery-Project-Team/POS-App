@@ -8,6 +8,7 @@ import { InvoiceItem } from '../../models/invoice_item';
 import { Invoice } from '../../models/invoice';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { Toast } from '@capacitor/toast';
+import { frequency } from 'src/app/models/frequency';
 
 @Injectable()
 export class StorageService {
@@ -102,6 +103,34 @@ export class StorageService {
         await this.loadData();
     }
 
+    async addFrequency(freq: { item_number: number; frequency: number }[]) {
+        try {
+          //console.log('Starting frequency update for:', freq);
+      
+          for (const frequency of freq) {
+            console.log('Processing itemNo:', frequency.item_number);
+            const sql = `
+              INSERT INTO freq (itemNo, frequency)
+              VALUES (${frequency.item_number}, 1)
+              ON CONFLICT(itemNo) DO UPDATE 
+              SET frequency = frequency + 1;
+            `;
+            console.log('Executing SQL:', sql);
+            await this.db.execute(sql, true);
+            console.log('Query executed for itemNo:', frequency.item_number);
+          }
+      
+          console.log('All queries executed.');
+          await this.loadData();
+          console.log('Frequency update complete.');
+          return true; 
+        } catch (error) {
+          console.error('Error updating frequencies:', error);
+          throw error;
+        }
+      }
+      
+      
     // Adds a list of invoices
     async addInvoices(invoices: Invoice[]) {
         const sql = `INSERT INTO invoices (invoiceNo, orderNo, custNo, routeNo, standingDay, invoiceDate, generate, generalNote, custDiscount, taxRate, terms,
@@ -281,31 +310,31 @@ export class StorageService {
 
     // Loads Returns Data into returnsList
     async loadReturnsData() {
-        const result = (await this.db.query('SELECT inv.*, inv_item.* FROM invoices inv JOIN invoiceitems inv_item ON inv.orderNo = inv_item.orderNo WHERE inv_item.returnsNo > 0'))
-        const results = result.values
-        if (results != null) {
-            const grouped: any = {};
+        // const result = (await this.db.query('SELECT inv.*, inv_item.* FROM invoices inv JOIN invoiceitems inv_item ON inv.orderNo = inv_item.orderNo WHERE inv_item.returnsNo > 0'))
+        // const results = result.values
+        // if (results != null) {
+        //     const grouped: any = {};
 
-            results.forEach(row => {
-                const orderNo = row.orderNo;
-                if (!grouped[orderNo]) {
-                    grouped[orderNo] = {
-                        ...row,
-                        items: []
-                    };
-                }
-                grouped[orderNo].items.push({
-                    'itemNo': row.itemNo,
-                    'returnsNo': row.returnsNo,
-                    'discrepancies': row.discrepancies,
-                });
-            });
+        //     results.forEach(row => {
+        //         const orderNo = row.orderNo;
+        //         if (!grouped[orderNo]) {
+        //             grouped[orderNo] = {
+        //                 ...row,
+        //                 items: []
+        //             };
+        //         }
+        //         grouped[orderNo].items.push({
+        //             'itemNo': row.itemNo,
+        //             'returnsNo': row.returnsNo,
+        //             'discrepancies': row.discrepancies,
+        //         });
+        //     });
 
-            const groupedArr = Object.values(grouped);
-            //this.returnsList.next(groupedArr);
-        } else {
-           // this.returnsList.next([]);
-        }
+        //     const groupedArr = Object.values(grouped);
+        //     //this.returnsList.next(groupedArr);
+        // } else {
+        //    // this.returnsList.next([]);
+        // }
     }
 
     // Refreshes All Data
@@ -313,4 +342,15 @@ export class StorageService {
         await Promise.all([this.loadHomePageData(), this.loadReturnsData()]);
         this.isDatabaseReady.next(true);
     }
+
+    async getFrequencies() {
+        const result: frequency[] = (await this.db.query('SELECT * FROM freq')).values as frequency[];
+        if (result.length > 0) {
+            return result;
+        } else {
+            return null;
+        }
+    }
+    
+
 }

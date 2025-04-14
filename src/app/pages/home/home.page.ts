@@ -151,25 +151,38 @@ import { DataService } from '../../services/database/data.service';
     }, 0);
   }
 
-   confirmSale() { 
-   
-   // need to update this to handle the sale confirmation
+  async confirmSale() {
     if (this.cartItems.length > 0) {
       try {
-        
         console.log('Sale confirmed:', {
           items: this.cartItems,
           total: this.subTotal
         });
+  
+        // Prepare frequency update list
+        const freqUpdates = this.cartItems.map(cartItem => ({
+          item_number: cartItem.itemNo,
+          frequency: 1
+        }));
+  
         
-        // Clear cart after successful sale
+        await this.storage.addFrequency(freqUpdates);
+        console.log('Frequencies updated successfully.');
+  
+        
         this.cartItems = [];
         this.subTotal = 0;
+  
+        
+        const frequencies = await this.storage.getFrequencies();
+        console.log('Current frequencies:', frequencies);
+  
       } catch (error) {
         console.error('Error confirming sale:', error);
       }
     }
   }
+  
 
    removeFromCart(index: number) { 
     this.cartItems.splice(index, 1);
