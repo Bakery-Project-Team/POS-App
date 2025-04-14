@@ -12,6 +12,7 @@ import { ViewChild } from '@angular/core';
 import { SearchService } from 'src/app/services/search/search.service';
 import { PopoverController } from "@ionic/angular";
 import { FilterPopoverComponent } from 'src/app/components/filter-popover/filter-popover.component';
+import { DataService } from '../../services/database/data.service';
 
  @Component({
  selector: 'app-home',
@@ -22,265 +23,158 @@ import { FilterPopoverComponent } from 'src/app/components/filter-popover/filter
  })
 
  export class HomePage implements OnInit {
-    invoices: any[] = []; // Stores all invoices
-    filteredInvoices: any[] = []; // Stores filtered invoices
-    returnInvoices: any[] = []; // Invoices that has returns
+   invoiceItems: InvoiceItem[] = [];
+   cartItems: InvoiceItem[] = [];
+   subTotal: number = 0;
+   currOrderNo: number = 0;
+   invoiceItemFrequencies: Map<number, number> = new Map();
+   sortedInvoiceItems: InvoiceItem[] = [];
 
-    shownInvoices: any[] = [];
-    shownReturns: any[] = [];
+   
 
-    searchQuery: string = ''; // Stores the search input
-    filterParameter: string = 'Today';
+  constructor(private storage: StorageService, private modalCtrl: ModalController, private searchService: SearchService, private popOverCtrl: PopoverController, private dataService: DataService) {}
 
-    deliveredCount: number = 0;
-    undeliveredCount: number = 0;
-    returnsCount: number = 0;
-    totalCount: number = 0;
-
-    showSearch: boolean = false;
-    showToolbar: boolean = true;
-
-    returnSelected: boolean = false;
-
-    startDate: any = null;
-    endDate: any = null;
-
-  constructor(private storage: StorageService, private modalCtrl: ModalController, private searchService: SearchService, private popOverCtrl: PopoverController) {}
-
-  // Listen for data updates and auto update UI
+  
   async ngOnInit() {
-    this.storage.homePageList.subscribe(async data => {
-      this.invoices = data;
-      await this.filter(this.filterParameter, this.startDate, this.endDate);
-    })
+    await this.loadAllInvoiceItems();
 
-    this.storage.returnsList.subscribe(async data => {
-      this.returnInvoices = data;
-      await this.filter(this.filterParameter, this.startDate, this.endDate);
-    })
     
-    this.searchService.showSearch$.subscribe(state => {
-      if (state === true) {
-        this.showSearch = true;
-        this.ngAfterViewInit()
-      } else {
-        this.showSearch = state;
-      }
-    });
-
-    this.searchService.showToolbar$.subscribe(ToolbarState => {
-      if (ToolbarState === true) {
-        this.cancelSearch();
-      } else {
-        this.showToolbar = ToolbarState;
-      }
-    });
   }
 
-  // Dynamically Update the Toolbar upon changes
-  updateInvoiceSummary() {
-    this.deliveredCount =  this.shownInvoices.filter(inv => inv.generate === 'Y').length;
-    this.undeliveredCount = this.shownInvoices.filter(inv => inv.generate !== 'Y').length;
-    this.returnsCount = this.shownReturns.reduce((total, inv) => total + (inv.returnsNo || 0), 0);
+ /* async loadInvoiceItems(invoiceNo: string) {               // this method was used to load a single invoice before(it works for testing just uncomment and use any invoice number)
+    
+    await this.dataService.fetchData(invoiceNo); // fetch data from db
+    
+   
+    const invoice = await this.storage.getInvoice(Number(invoiceNo)); 
+    if (invoice && invoice[0]) {
+      this.currOrderNo = invoice[0].orderNo;
+      
+      const items = await this.storage.getInvoiceItems(this.currOrderNo);
+      if (items) {
+
+        items.forEach(item => {
+          const frequency = this.invoiceItemFrequencies.get(item.itemNo) || 0;
+          this.invoiceItemFrequencies.set(item.itemNo, frequency + item.quantity);
+        });
+        this.invoiceItems = items;
+        await this.sortInvoiceItems(); // sort items based on frequency
+        console.log(this.invoiceItems); 
+      }
+    }
+  }
+    */
+  async loadAllInvoiceItems() {
+    try{
+      const invoices = await this.storage.getAllInvoices();
+
+      for(const invoice of invoices){
+
+        await this.dataService.fetchData(invoice.invoiceNo.toString()); // get data from DB
+        const items = await this.storage.getInvoiceItems(invoice.orderNo);
+
+        if (items) {
+          items.forEach(item => {   // update frequency map
+            const currentFreq = this.invoiceItemFrequencies.get(item.itemNo) || 0;
+            this.invoiceItemFrequencies.set(item.itemNo, currentFreq + item.quantity);
+          });
+
+           // Add unique items to our items list
+        items.forEach(item => {
+          if (!this.invoiceItems.some(existing => existing.itemNo === item.itemNo)) {
+            this.invoiceItems.push(item);
+          }
+        });
+      }
+    }
+
+    await this.sortInvoiceItems();
+    console.log('Sorted items by frequency:', this.invoiceItems);
+  } catch (error) {
+    console.error('Error loading invoice data:', error);
   }
 
-  // Search based on Company Name, Invoice number and Date.
-  filterInvoices(event: any) {
-    const rawQuery = event.target.value || '';
-    const query = normalize(rawQuery);
+}    
   
-    this.filteredInvoices = this.invoices.filter(invoice => {
-      return normalize(invoice.company).includes(query) ||
-             invoice.invoiceNo.toString().includes(query) ||
-             normalize(invoice.invoiceDate).includes(query); // ✅ this line
-    });
+
+    // sorts the invoice items based on frequency
+  async sortInvoiceItems() {
+
+    this.sortedInvoiceItems = this.invoiceItems.slice().sort((a, b) => {
+
+      const freqA = this.invoiceItemFrequencies.get(a.itemNo) || 0;
+      const freqB = this.invoiceItemFrequencies.get(b.itemNo) || 0;
+
+     return freqB - freqA; // (highest frequency first)
+  });
+
+  this.invoiceItems = this.sortedInvoiceItems; // updating the items
   }
 
-  // Filter Button Functions
-
-  filterByToday() {
-    const date = '2024-09-02';
-    this.shownInvoices = this.invoices.filter(invoice => invoice.invoiceDate.includes(date));
-    this.shownReturns = this.returnInvoices.filter(inv => inv.invoiceDate.includes(date));
-    this.filterParameter = 'Today';
-  }
-
-  filterByDate(date: string) {
-    const dateString = date.split('T')[0];
-    this.shownInvoices = this.invoices.filter(invoice => invoice.invoiceDate.includes(dateString));
-    this.shownReturns = this.returnInvoices.filter(inv => inv.invoiceDate.includes(dateString));
-    this.filterParameter = 'Specific Date';
-  }
-
-  filterByAll() {
-    this.returnSelected = false;
-    this.shownInvoices = this.invoices;
-    this.shownReturns = this.returnInvoices;
-    this.filterParameter = 'All';
-  }
-
-  filterByRange(start: string, end: string) {
-    const startDate = new Date(start).toISOString().split('T')[0];
-    const endDate = new Date(end).toISOString().split('T')[0];
-
-    this.shownInvoices = this.invoices.filter(invoice => {
-      const invDate = new Date(invoice.invoiceDate).toISOString().split('T')[0];
-      return invDate >= startDate && invDate <= endDate;
-    });
-
-    this.shownReturns = this.returnInvoices.filter(inv => {
-      const invDate = new Date(inv.invoiceDate).toISOString().split('T')[0];
-      return invDate >= startDate && invDate <= endDate;
-    });
-
-    this.filterParameter = 'Range';
-  }
-
-  async filter(type: string, start: string | null, end: string | null) {
-    switch (type) {
-      case 'All':
-        this.filterByAll();
-        this.setTopTab(this.selectedTab);
-        this.updateInvoiceSummary();
-        break;
-      case 'Today':
-        this.filterByToday();
-        this.setTopTab(this.selectedTab);
-        this.updateInvoiceSummary();
-        break;
-      case 'Range':
-        if (start != null && end != null) {
-        this.filterByRange(start, end);
-        this.setTopTab(this.selectedTab);
-        this.updateInvoiceSummary();
-        }
-        break;
-      case 'Specific Date':
-        if (start != null) {
-          this.filterByDate(start);
-          this.setTopTab(this.selectedTab);
-          this.updateInvoiceSummary();
-        }
-        break;
-    }
-  }
-
-  // Creates Modal for Invoice Details
-  async openInvoiceDetails(invoice: Invoice) {
-    const items = await this.storage.getInvoiceItems(invoice.orderNo)
-    const modal = await this.modalCtrl.create({
-      component: InvoicedetailsComponent,
-      componentProps: { 
-        invoice, 
-        items
-      }, // Pass invoice data to modal
-    });
-    return await modal.present();
-  }
-
-  // Selects a specific tab in the header bar and filters the results
-  selectedTab = 'delivered';
-  async setTopTab(tab: string) {
-    this.selectedTab = tab;
-    switch (tab) {
-      case 'delivered':
-        this.showDelivered();
-        break;
-      case 'pending':
-        this.showPending();
-        break;
-      case 'returns':
-        this.showReturns();
-        break;
-    }
-  }
-
-  // Shows Delivered invoices
-  showDelivered() {
-    this.returnSelected = false
-    this.filteredInvoices = this.shownInvoices.filter(invoice => invoice.generate === 'Y')
-  }
-
-  // Shows undelivered invoices
-  showPending() {
-    this.returnSelected = false;
-    this.filteredInvoices = this.shownInvoices.filter(invoice => invoice.generate === 'N')
-  }
-
-  // Show returns
-  showReturns() {
-    this.returnSelected = true;
-    this.filteredInvoices = [];
-  }
-
-  async openFilterPopover(ev: any) {
-    const popover = await this.popOverCtrl.create({
-      component: FilterPopoverComponent,
-      event: ev,
-      translucent: true,
-      showBackdrop: false
-    });
   
-    await popover.present();
 
-    const { data, role } = await popover.onWillDismiss();
-    if(role === "confirm" && data?.filter) {
-      if (data.filter === 'Range') {
-        await this.filter(data.filter, data.start, data.end);
-      } else if (data.filter === 'Specific Date') {
-        await this.filter(data.filter, data.date, null)
-      } else {
-        await this.filter(data.filter, null, null);
+   addToCart(item: InvoiceItem) { 
+    const existingItem = this.cartItems.find(i => i.itemNo === item.itemNo);
+    
+    if (existingItem) {
+      existingItem.quantity++;
+    } else {
+      // Create a new cart item from the invoice item
+      const cartItem: InvoiceItem = {
+        ...item,
+        quantity: 1
+      };
+      this.cartItems.push(cartItem);
+    }
+    this.calculateSubtotal();
+  }
+
+   decreaseQuantity(index: number) { 
+    if (this.cartItems[index].quantity > 1) {
+      this.cartItems[index].quantity--;
+      this.calculateSubtotal();
+    } else {
+      this.cartItems.splice(index, 1);
+      this.calculateSubtotal();
+    }
+  }
+
+   increaseQuantity(index: number) { 
+    this.cartItems[index].quantity++;
+    this.calculateSubtotal();
+  }
+
+  calculateSubtotal() {
+    this.subTotal = this.cartItems.reduce((total, item) => {
+      return total + (item.price * item.quantity);
+
+    }, 0);
+  }
+
+   confirmSale() { 
+   
+   // need to update this to handle the sale confirmation
+    if (this.cartItems.length > 0) {
+      try {
+        
+        console.log('Sale confirmed:', {
+          items: this.cartItems,
+          total: this.subTotal
+        });
+        
+        // Clear cart after successful sale
+        this.cartItems = [];
+        this.subTotal = 0;
+      } catch (error) {
+        console.error('Error confirming sale:', error);
       }
     }
   }
 
-  // Opens keyboard to search bar after small delay when search is clicked
-  @ViewChild('searchBar', { static: false }) searchBar!: IonSearchbar;
-  ngAfterViewInit() {
-    setTimeout(() => {
-      this.searchBar?.setFocus();
-    }, 300);
-  }
-
-  // Handles cancel search click back to home page
-  cancelSearch() {
-    setTimeout(() => {
-      this.searchQuery = ''
-      this.toggleSearchBar()
-    }, 300);
-  }
-
-  // Hide Search Bar
-  toggleSearchBar() {
-    if (this.showSearch === true) {
-      this.showSearch = !this.showSearch;
-      this.showToolbar = !this.showToolbar;
-    }
+   removeFromCart(index: number) { 
+    this.cartItems.splice(index, 1);
+    this.calculateSubtotal();
   }
 }
 
-// Functions to convert dateformat to readable
-function formatDate(dateStr: string): string {
-   const date = new Date(dateStr);
-   const day = date.getDate();
-   const month = date.toLocaleString('en-US', { month: 'short'});
-   const year = date.getFullYear();
-
-   const suffix = getSuffix(day);
-   return `${month} ${day}${suffix} ${year}`;
-}
-
- function getSuffix(day: number): string {
-   if (day > 3 && day < 21) return 'th';
-   switch (day % 10) {
-      case 1: return 'st';
-      case 2: return 'nd';
-      case 3: return 'rd';
-      default: return 'th'
-   }
-}
-
-function normalize(str: string): string {
-  return str.toLowerCase().replace(/[^a-z0-9]/g, '').trim();
-}
+  

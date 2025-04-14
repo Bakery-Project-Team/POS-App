@@ -13,9 +13,8 @@
   <ion-card>
     <ion-card-title>Download Data</ion-card-title>
     <ion-item>
-      <ion-input [(ngModel)]="routeNo" label="Route Number" labelPlacement="stacked" placeholder="Enter number"></ion-input>
+      <ion-input [(ngModel)]="invoiceNo" label="Invoice Number" labelPlacement="stacked" placeholder="Enter number"></ion-input>
     </ion-item>
-    <ion-datetime presentation="date" [(ngModel)]="selectedDate" (ionChange)="onDateSelected($event)" [min]="minDate" [max]="maxDate" color="primary"></ion-datetime>
     <ion-button (click)="downloadAndSave()" >Download</ion-button>
   </ion-card>
 </ion-content>

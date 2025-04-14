@@ -1,62 +1,68 @@
-<!-- Invoice Management Page -->
-<ion-header [translucent]="true">
-  <ion-toolbar *ngIf="showToolbar">
-    <ion-tab-bar class="top-tab-bar">
-      <ion-tab-button [class.selected]="selectedTab === 'delivered'" (click)="setTopTab('delivered')">
-        <div class="tab-count">{{ deliveredCount }}</div>
-        <ion-label>Delivered</ion-label>
-      </ion-tab-button>
-      <ion-tab-button [class.selected]="selectedTab === 'pending'" (click)="setTopTab('pending')">
-        <div class="tab-count">{{ undeliveredCount }}</div>
-        <ion-label>Pending</ion-label>
-      </ion-tab-button>
-      <ion-tab-button [class.selected]="selectedTab === 'returns'" (click)="setTopTab('returns')">
-        <div class="tab-count">{{ returnsCount }}</div>
-        <ion-label>Returns</ion-label>
-      </ion-tab-button>
-      <ion-tab-button (click)="openFilterPopover($event)">
-        <ion-label> {{filterParameter}} </ion-label>
-        <ion-icon name="filter-outline"></ion-icon>
-      </ion-tab-button>
-    </ion-tab-bar>
-  </ion-toolbar>
-
-  <ion-toolbar *ngIf="showSearch">
-    <ion-searchbar #searchBar mode="ios" [(ngModel)]="searchQuery" (ionInput)="filterInvoices($event)"
-      [showCancelButton]="true" (ionCancel)="cancelSearch()"></ion-searchbar>
+<ion-header>
+  <ion-toolbar>
+    <ion-title>
+      POINT OF SALE APPLICATION
+    </ion-title>
+    <ion-buttons slot="end">
+      <ion-button>
+        <ion-icon name="notifications-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
   </ion-toolbar>
 </ion-header>
 
-<ion-content class="ion-padding">
-  <ion-list *ngIf="!returnSelected">
-    <ion-card class="invoice-card" *ngFor="let invoice of filteredInvoices" (click)="openInvoiceDetails(invoice)">
-      <ion-card-header>
-        <ion-card-title> {{invoice.invoiceNo}} </ion-card-title>
-        <ion-card-subtitle> <ion-icon name="person-circle"></ion-icon> {{ invoice.company }} </ion-card-subtitle>
-      </ion-card-header>
-      <ion-card-content>
-        <span>
-          <ion-icon name="calendar"></ion-icon> {{ invoice.invoiceDate | date: 'MMM dd yyyy' }}<br>
-        </span>
-        <span>
-          <ion-icon name="cash-outline"></ion-icon> <b> $ {{ invoice.totalItems }}</b><br>
-        </span>
-        <span>
-          <ion-icon name="notifications" [style.color]="invoice.generate === 'Y' ? 'green' : 'orange'"></ion-icon>
-          <b>Status -</b> {{ invoice.generate === 'Y' ? 'Delivered' : 'Not Delivered' }}
-        </span>
-      </ion-card-content>
-    </ion-card>
-  </ion-list>
 
-  <ion-list *ngIf="returnSelected">
-    <ion-card class="return-card" *ngFor="let invoice of shownReturns">
-      <ion-card-header>
-        <ion-card-title> {{invoice.invoiceNo}} </ion-card-title>
-        <ion-item class="return-item" *ngFor="let item of invoice.items"> 
-          {{item.itemNo}}: {{item.returnsNo}}
-        </ion-item>
-      </ion-card-header>
-    </ion-card>
-  </ion-list>
-</ion-content>
+
+
+<!-- Item List -->
+<ion-list class="item-list">
+  <ion-item *ngFor="let item of invoiceItems; let i = index">
+    <ion-label>
+      <h2>Item #{{ item.itemNo }}</h2>
+      <h3>{{ item.partNo }}</h3>
+      <p>$TTD{{ item.price }}</p>
+    </ion-label>
+    <div class="quantity-controls">
+      <ion-button fill="clear" (click)="addToCart(item)">
+        <ion-icon name="add-circle-outline"></ion-icon>
+      </ion-button>
+    </div>
+  </ion-item>
+</ion-list>
+
+<!-- Summary Section -->
+<ion-card class="summary-card">
+  <ion-card-header>
+    <ion-card-title>Summary</ion-card-title>
+  </ion-card-header>
+  <ion-card-content>
+    <ion-list lines="full">
+      <ion-item *ngFor="let item of cartItems; let i = index">
+        <ion-label>
+          <h2>Item #{{ item.itemNo }}</h2>
+          <p>{{ item.partNo }}</p>
+        </ion-label>
+        <div class="quantity-controls">
+          <ion-button fill="clear" (click)="decreaseQuantity(i)">
+            <ion-icon name="remove-circle-outline"></ion-icon>
+          </ion-button>
+          <span>{{ item.quantity }}</span>
+          <ion-button fill="clear" (click)="increaseQuantity(i)">
+            <ion-icon name="add-circle-outline"></ion-icon>
+          </ion-button>
+        </div>
+        <ion-note slot="end">${{ item.price * item.quantity | number:'1.2-2' }}</ion-note>
+      </ion-item>
+      <ion-item>
+        <ion-label><strong>Sub Total</strong></ion-label>
+        <ion-note slot="end"><strong>$TTD{{ subTotal | number:'1.2-2' }}</strong></ion-note>
+      </ion-item>
+    </ion-list>
+  </ion-card-content>
+</ion-card>
+
+<ion-button expand="block" color="primary" class="confirm-button">
+  Confirm Sale
+</ion-button>
+
+
