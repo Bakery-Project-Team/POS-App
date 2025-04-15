@@ -12,24 +12,53 @@
 </ion-header>
 
 
+<ion-content>
+  <!-- <ion-list class="item-list">
+    <ion-item *ngFor="let item of invoiceItems; let i = index">
+      <ion-label>
+        <h2>Item #{{ item.itemNo }}</h2>
+        <h3>{{ item.partNo }}</h3>
+        <p>$TTD{{ item.price }}</p>
+      </ion-label>
+      <div class="quantity-controls">
+        <ion-button fill="clear" (click)="addToCart(item)">
+          <ion-icon name="add-circle-outline"></ion-icon>
+        </ion-button>
+      </div>
+    </ion-item>
+  </ion-list> -->
 
+  <ion-row class="heading-row">
+    <ion-col><b>Item</b></ion-col>
+    <ion-col class="quantity-col"><b>Qty</b></ion-col>
+  </ion-row>
 
-<!-- Item List -->
-<ion-list class="item-list">
-  <ion-item *ngFor="let item of invoiceItems; let i = index">
-    <ion-label>
-      <h2>Item #{{ item.itemNo }}</h2>
-      <h3>{{ item.partNo }}</h3>
-      <p>$TTD{{ item.price }}</p>
-    </ion-label>
-    <div class="quantity-controls">
-      <ion-button fill="clear" (click)="addToCart(item)">
-        <ion-icon name="add-circle-outline"></ion-icon>
-      </ion-button>
-    </div>
-  </ion-item>
-</ion-list>
+  <ion-grid>
+    <ion-row *ngFor="let item of invoiceItems; let i = index">
+      <ion-col class="item-info">
+        <div><b>{{ item.itemNo }}</b></div>
+        <div>{{ item.partNo }}</div>
+        <div>${{ item.price.toFixed(2) }}</div>
+      </ion-col>
 
+      <ion-col>
+        <div class="quantity-toggle">
+          <ion-button size="small" (click)="removeFromCart(i)">-</ion-button>
+
+          <ion-input type="number" [(ngModel)]="currentQuantityArr[i]" (ionChange)="validateInput(i)" [ngClass]="{
+            'valid-input': currentQuantityArr[i] <= itemQuantityArr[i] && currentQuantityArr[i] >= 0,
+            'invalid-input': currentQuantityArr[i] > itemQuantityArr[i] || currentQuantityArr[i] < 0
+          }" min="0" style="width: 60px; text-align: center;"></ion-input>
+
+          <ion-button size="small" (click)="addToCart(i)">+</ion-button>
+        </div>
+      </ion-col>
+    </ion-row>
+  </ion-grid>
+
+</ion-content>
+
+<ion-content>
 <!-- Summary Section -->
 <ion-card class="summary-card">
   <ion-card-header>
@@ -42,16 +71,7 @@
           <h2>Item #{{ item.itemNo }}</h2>
           <p>{{ item.partNo }}</p>
         </ion-label>
-        <div class="quantity-controls">
-          <ion-button fill="clear" (click)="decreaseQuantity(i)">
-            <ion-icon name="remove-circle-outline"></ion-icon>
-          </ion-button>
-          <span>{{ item.quantity }}</span>
-          <ion-button fill="clear" (click)="increaseQuantity(i)">
-            <ion-icon name="add-circle-outline"></ion-icon>
-          </ion-button>
-        </div>
-        <ion-note slot="end">${{ item.price * item.quantity | number:'1.2-2' }}</ion-note>
+        <ion-note slot="end">${{ item.price * item.selectedQuantity | number:'1.2-2' }}</ion-note>
       </ion-item>
       <ion-item>
         <ion-label><strong>Sub Total</strong></ion-label>
@@ -60,7 +80,10 @@
     </ion-list>
   </ion-card-content>
 </ion-card>
+</ion-content>
 
-<ion-button (click)="confirmSale()" expand="block" color="primary" class="confirm-button"> Confirm Sale</ion-button>
+  
+  <ion-button (click)="confirmSale()" expand="block" color="primary" class="confirm-button"> Confirm Sale</ion-button>
+<!-- Item List -->
 
 

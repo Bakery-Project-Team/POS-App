@@ -12,29 +12,30 @@ import { SearchService } from 'src/app/services/search/search.service';
 import { PopoverController } from "@ionic/angular";
 import { DataService } from '../../services/database/data.service';
 
- @Component({
- selector: 'app-home',
- templateUrl: 'home.page.html',
- styleUrls: ['home.page.scss'],
- standalone: true,
- imports: [IonicModule, CommonModule, FormsModule],
- })
+@Component({
+  selector: 'app-home',
+  templateUrl: 'home.page.html',
+  styleUrls: ['home.page.scss'],
+  standalone: true,
+  imports: [IonicModule, CommonModule, FormsModule],
+})
 
- export class HomePage implements OnInit {
+export class HomePage implements OnInit {
   invoices!: Invoice[];
   invoiceItems!: InvoiceItem[];
 
-   cartItems: InvoiceItem[] = [];
-   subTotal: number = 0;
-   currOrderNo: number = 0;
-   invoiceItemFrequencies: Map<number, number> = new Map();
-   sortedInvoiceItems: InvoiceItem[] = [];
+  subTotal: number = 0;
+  currOrderNo: number = 0;
+  invoiceItemFrequencies: Map<number, number> = new Map();
+  sortedInvoiceItems: InvoiceItem[] = [];
+  itemQuantityArr: number[] = [];
+  currentQuantityArr: number[] = [];
 
-   
 
-  constructor(private storage: StorageService, private modalCtrl: ModalController, private searchService: SearchService, private popOverCtrl: PopoverController, private dataService: DataService) {}
 
-  
+  constructor(private storage: StorageService, private modalCtrl: ModalController, private searchService: SearchService, private popOverCtrl: PopoverController, private dataService: DataService) { }
+
+
   async ngOnInit() {
     this.storage.invoiceList.subscribe(async data => {
       this.invoices = data;
@@ -42,22 +43,26 @@ import { DataService } from '../../services/database/data.service';
 
     this.storage.invoiceItemList.subscribe(async data => {
       this.invoiceItems = data;
-    })
 
+      this.itemQuantityArr = this.invoiceItems.map(item => item.quantity);
+      this.currentQuantityArr = new Array(this.invoiceItems.length).fill(0);
+    })
   }
+
+
 
   // async loadAllInvoiceItems() {
   //   try{
   //       for(const invoice of invoices){
 
   //         const items = await this.storage.getInvoiceItems(invoice.orderNo);
-  
+
   //         if (items) {
   //           items.forEach(item => {   // update frequency map
   //             const currentFreq = this.invoiceItemFrequencies.get(item.itemNo) || 0;
   //             this.invoiceItemFrequencies.set(item.itemNo, currentFreq + item.quantity);
   //           });
-  
+
   //            // Add unique items to our items list
   //         items.forEach(item => {
   //           if (!this.invoiceItems.some(existing => existing.itemNo === item.itemNo)) {
@@ -68,7 +73,7 @@ import { DataService } from '../../services/database/data.service';
   //     }
   //   }
 
-    
+
 
   //   await this.sortInvoiceItems();
   //   console.log('Sorted items by frequency:', this.invoiceItems);
@@ -76,10 +81,10 @@ import { DataService } from '../../services/database/data.service';
   //   console.error('Error loading invoice data:', error);
   // }
 
- 
-  
 
-    // sorts the invoice items based on frequency
+
+
+  // sorts the invoice items based on frequency
   async sortInvoiceItems() {
 
     this.sortedInvoiceItems = this.invoiceItems.slice().sort((a, b) => {
@@ -87,100 +92,106 @@ import { DataService } from '../../services/database/data.service';
       const freqA = this.invoiceItemFrequencies.get(a.itemNo) || 0;
       const freqB = this.invoiceItemFrequencies.get(b.itemNo) || 0;
 
-     return freqB - freqA; // (highest frequency first)
-  });
+      return freqB - freqA; // (highest frequency first)
+    });
 
-  this.invoiceItems = this.sortedInvoiceItems; // updating the items
+    this.invoiceItems = this.sortedInvoiceItems; // updating the items
   }
 
+
+
+  addToCart(index: number) {
+    if (this.currentQuantityArr[index] < this.itemQuantityArr[index]) {
+      this.currentQuantityArr[index]++;
+    }
+
+    this.calculateSubtotal();
+  }
+
+  removeFromCart(index: number) {
+    if (this.currentQuantityArr[index] > 0) {
+      this.currentQuantityArr[index]--;
+    }
+
+    this.calculateSubtotal();
+  }
+
+  validateInput(index: number) {
+    const max = this.itemQuantityArr[index];
+    let value = this.currentQuantityArr[index];
   
+    if (value < 0) {
+      this.currentQuantityArr[index] = 0;
+    } else if (value > max) {
+      this.currentQuantityArr[index] = max;
+    }
+  }
 
-   addToCart(item: InvoiceItem) { 
-    const existingItem = this.cartItems.find(i => i.itemNo === item.itemNo);
-    
-    if (existingItem) {
-      existingItem.quantity++;
-    } else {
-      // Create a new cart item from the invoice item
-      const cartItem: InvoiceItem = {
+  get cartItems() {
+    return this.invoiceItems
+      .map((item, i) => ({
         ...item,
-        quantity: 1
-      };
-      this.cartItems.push(cartItem);
-    }
-    this.calculateSubtotal();
-  }
-
-   decreaseQuantity(index: number) { 
-    if (this.cartItems[index].quantity > 1) {
-      this.cartItems[index].quantity--;
-      this.calculateSubtotal();
-    } else {
-      this.cartItems.splice(index, 1);
-      this.calculateSubtotal();
-    }
-  }
-
-   increaseQuantity(index: number) { 
-    this.cartItems[index].quantity++;
-    this.calculateSubtotal();
+        selectedQuantity: this.currentQuantityArr[i]
+      }))
+      .filter(item => item.selectedQuantity > 0)
   }
 
   calculateSubtotal() {
     this.subTotal = this.cartItems.reduce((total, item) => {
-      return total + (item.price * item.quantity);
+      return total + (item.price * item.selectedQuantity);
 
     }, 0);
   }
 
   async confirmSale() {
-    if (this.cartItems.length > 0) {
-      try {
-        console.log('Sale confirmed:', {
-          items: this.cartItems,
-          total: this.subTotal
-        });
-  
-        // Prepare frequency update list
-        const freqUpdates = this.cartItems.map(cartItem => ({
-          item_number: cartItem.itemNo,
-          frequency: 1
-        }));
-  
-        await this.storage.addFrequency(freqUpdates);
-        console.log('Frequencies updated successfully.');
-  
-        // Prepare sale records for inv table
-        const saleRecords = this.cartItems.map(cartItem => ({
-          itemNo: cartItem.itemNo,
-          orderNo: cartItem.orderNo,  
-          quantity: cartItem.quantity
-        }));
-  
-        await this.storage.addSale(saleRecords);
-        console.log('Sales recorded in inv successfully.');
-  
-        this.cartItems = [];
-        this.subTotal = 0;
-  
-        const frequencies = await this.storage.getFrequencies();
-        console.log('Current frequencies:', frequencies);
+    console.log('Before: ', await this.storage.getSales())
 
-        const sales = await this.storage.getSales();
-        console.log('Current inv table:', sales)
-  
-      } catch (error) {
-        console.error('Error confirming sale:', error);
-      }
-    }
-  }
-  
-  
+    console.log('Cart Items to Save: ', this.cartItems);
 
-   removeFromCart(index: number) { 
-    this.cartItems.splice(index, 1);
-    this.calculateSubtotal();
+    const saleRecords = this.cartItems.map(cartItem => ({
+      itemNo: cartItem.itemNo,
+      orderNo: cartItem.orderNo,
+      quantity: cartItem.selectedQuantity
+    }));
+
+    await this.storage.addSale(saleRecords);
+    console.log('After: ', await this.storage.getSales())
+
+    // if (this.cartItems.length > 0) {
+
+    //     // Prepare frequency update list
+    //     const freqUpdates = this.cartItems.map(cartItem => ({
+    //       item_number: cartItem.itemNo,
+    //       frequency: 1
+    //     }));
+
+    //     await this.storage.addFrequency(freqUpdates);
+    //     console.log('Frequencies updated successfully.');
+
+    //     // Prepare sale records for inv table
+    //     const saleRecords = this.cartItems.map(cartItem => ({
+    //       itemNo: cartItem.itemNo,
+    //       orderNo: cartItem.orderNo,  
+    //       quantity: cartItem.quantity
+    //     }));
+
+    //     await this.storage.addSale(saleRecords);
+    //     console.log('Sales recorded in inv successfully.');
+
+    //     this.cartItems = [];
+    //     this.subTotal = 0;
+
+    //     const frequencies = await this.storage.getFrequencies();
+    //     console.log('Current frequencies:', frequencies);
+
+    //     const sales = await this.storage.getSales();
+    //     console.log('Current inv table:', sales)
+
+    //   } catch (error) {
+    //     console.error('Error confirming sale:', error);
+    //   }
+    // }
   }
+
 }
 
-  
