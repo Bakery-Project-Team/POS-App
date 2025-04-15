@@ -52,7 +52,7 @@ export class SyncPage implements OnInit {
     await loading.present();
     try {
       const route = `route${this.routeNo}`
-      this.data.fetchData(this.invoiceNo);
+      await this.data.fetchData(this.invoiceNo);
     } catch(err) {
       console.log('Ionic Download failed: ', err);
     } finally {
