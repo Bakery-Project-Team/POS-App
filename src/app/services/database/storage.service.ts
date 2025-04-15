@@ -9,6 +9,7 @@ import { Invoice } from '../../models/invoice';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { Toast } from '@capacitor/toast';
 import { frequency } from 'src/app/models/frequency';
+import { inventory } from 'src/app/models/inventory';
 
 @Injectable()
 export class StorageService {
@@ -143,6 +144,20 @@ export class StorageService {
         await this.db.execute(sql + values);
         await this.loadData();
     }
+
+    async addSale(sales: { itemNo: number, orderNo: number, quantity: number }[]) {
+        if (sales.length === 0) return;
+      
+        const sql = `INSERT INTO inv (itemNo, orderNo, quantity) VALUES `;
+      
+        const values = sales.map(sale =>
+          `(${sale.itemNo}, ${sale.orderNo}, ${sale.quantity})`
+        ).join(",\n");
+      
+        await this.db.execute(sql + values + ';');
+      }
+      
+      
 
     // Gets all items on an invoice by order number
     async getInvoiceItems(orderNo: number) {
@@ -345,6 +360,15 @@ export class StorageService {
 
     async getFrequencies() {
         const result: frequency[] = (await this.db.query('SELECT * FROM freq')).values as frequency[];
+        if (result.length > 0) {
+            return result;
+        } else {
+            return null;
+        }
+    }
+
+    async getSales() {
+        const result: inventory[] = (await this.db.query('SELECT * FROM inv')).values as inventory[];
         if (result.length > 0) {
             return result;
         } else {
