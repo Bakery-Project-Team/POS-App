@@ -3,7 +3,6 @@ import { IonicModule } from '@ionic/angular';
 import { CommonModule } from '@angular/common';
 import { StorageService } from '../../services/database/storage.service';
 import { Invoice } from '../../models/invoice';
-import { InvoicedetailsComponent } from '../../components/invoicedetails/invoicedetails.component';
 import { FormsModule } from '@angular/forms';
 import { ModalController } from '@ionic/angular'
 import { InvoiceItem } from '../../models/invoice_item';
@@ -11,7 +10,6 @@ import { IonSearchbar } from '@ionic/angular';
 import { ViewChild } from '@angular/core';
 import { SearchService } from 'src/app/services/search/search.service';
 import { PopoverController } from "@ionic/angular";
-import { FilterPopoverComponent } from 'src/app/components/filter-popover/filter-popover.component';
 import { DataService } from '../../services/database/data.service';
 
  @Component({
@@ -23,7 +21,9 @@ import { DataService } from '../../services/database/data.service';
  })
 
  export class HomePage implements OnInit {
-   invoiceItems: InvoiceItem[] = [];
+  invoices!: Invoice[];
+  invoiceItems!: InvoiceItem[];
+
    cartItems: InvoiceItem[] = [];
    subTotal: number = 0;
    currOrderNo: number = 0;
@@ -36,65 +36,47 @@ import { DataService } from '../../services/database/data.service';
 
   
   async ngOnInit() {
-    await this.loadAllInvoiceItems();
+    this.storage.invoiceList.subscribe(async data => {
+      this.invoices = data;
+    })
 
-    
+    this.storage.invoiceItemList.subscribe(async data => {
+      this.invoiceItems = data;
+    })
+
   }
 
- /* async loadInvoiceItems(invoiceNo: string) {               // this method was used to load a single invoice before(it works for testing just uncomment and use any invoice number)
+  // async loadAllInvoiceItems() {
+  //   try{
+  //       for(const invoice of invoices){
+
+  //         const items = await this.storage.getInvoiceItems(invoice.orderNo);
+  
+  //         if (items) {
+  //           items.forEach(item => {   // update frequency map
+  //             const currentFreq = this.invoiceItemFrequencies.get(item.itemNo) || 0;
+  //             this.invoiceItemFrequencies.set(item.itemNo, currentFreq + item.quantity);
+  //           });
+  
+  //            // Add unique items to our items list
+  //         items.forEach(item => {
+  //           if (!this.invoiceItems.some(existing => existing.itemNo === item.itemNo)) {
+  //             this.invoiceItems.push(item);
+  //           }
+  //         });
+  //       }
+  //     }
+  //   }
+
     
-    await this.dataService.fetchData(invoiceNo); // fetch data from db
-    
-   
-    const invoice = await this.storage.getInvoice(Number(invoiceNo)); 
-    if (invoice && invoice[0]) {
-      this.currOrderNo = invoice[0].orderNo;
-      
-      const items = await this.storage.getInvoiceItems(this.currOrderNo);
-      if (items) {
 
-        items.forEach(item => {
-          const frequency = this.invoiceItemFrequencies.get(item.itemNo) || 0;
-          this.invoiceItemFrequencies.set(item.itemNo, frequency + item.quantity);
-        });
-        this.invoiceItems = items;
-        await this.sortInvoiceItems(); // sort items based on frequency
-        console.log(this.invoiceItems); 
-      }
-    }
-  }
-    */
-  async loadAllInvoiceItems() {
-    try{
-      const invoices = await this.storage.getAllInvoices();
+  //   await this.sortInvoiceItems();
+  //   console.log('Sorted items by frequency:', this.invoiceItems);
+  // } catch (error) {
+  //   console.error('Error loading invoice data:', error);
+  // }
 
-      for(const invoice of invoices){
-
-        await this.dataService.fetchData(invoice.invoiceNo.toString()); // get data from DB
-        const items = await this.storage.getInvoiceItems(invoice.orderNo);
-
-        if (items) {
-          items.forEach(item => {   // update frequency map
-            const currentFreq = this.invoiceItemFrequencies.get(item.itemNo) || 0;
-            this.invoiceItemFrequencies.set(item.itemNo, currentFreq + item.quantity);
-          });
-
-           // Add unique items to our items list
-        items.forEach(item => {
-          if (!this.invoiceItems.some(existing => existing.itemNo === item.itemNo)) {
-            this.invoiceItems.push(item);
-          }
-        });
-      }
-    }
-
-    await this.sortInvoiceItems();
-    console.log('Sorted items by frequency:', this.invoiceItems);
-  } catch (error) {
-    console.error('Error loading invoice data:', error);
-  }
-
-}    
+ 
   
 
     // sorts the invoice items based on frequency
