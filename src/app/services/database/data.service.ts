@@ -18,6 +18,9 @@ export class DataService {
   constructor(private storage: StorageService, private http: HttpClient) {}
 
   async fetchData(invoiceNo: string) {
+    this.invoiceList = [];
+    this.invoiceItemList = [];
+
     const url = `${this.baseURL}/${invoiceNo}`
 
     this.http.get(url).subscribe({
@@ -35,8 +38,6 @@ export class DataService {
         });
     
         await this.store();
-        //console.log(this.storage.getInvoice(913468));
-        //console.log(this.storage.getInvoiceItems(1028936));
       },
       error: (error) => console.log("Ionic Error requesting: ", error.message)
     });

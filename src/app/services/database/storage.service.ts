@@ -13,8 +13,8 @@ import { inventory } from 'src/app/models/inventory';
 
 @Injectable()
 export class StorageService {
-    public homePageList: BehaviorSubject<any[]> = new BehaviorSubject<any[]>([]);
-    public returnsList: BehaviorSubject<any[]> = new BehaviorSubject<any[]>([]);
+    public invoiceList: BehaviorSubject<Invoice[]> = new BehaviorSubject<Invoice[]>([]);
+    public invoiceItemList: BehaviorSubject<InvoiceItem[]> = new BehaviorSubject<InvoiceItem[]>([]);
 
     private databaseName: string = "";
     private uUpdStmts: UserUpgradeStatements = new UserUpgradeStatements();
@@ -155,10 +155,8 @@ export class StorageService {
         ).join(",\n");
       
         await this.db.execute(sql + values + ';');
-      }
+    }
       
-      
-
     // Gets all items on an invoice by order number
     async getInvoiceItems(orderNo: number) {
         const result: InvoiceItem[] = (await this.db.query('SELECT * FROM invoiceitems WHERE orderNo = ?', [orderNo])).values as InvoiceItem[];
@@ -177,12 +175,6 @@ export class StorageService {
         } else {
             return null;
         }
-    }
-
-    // used to pull all invoice records from database
-    async getAllInvoices(){
-        const result: Invoice[] = (await this.db.query('SELECT * FROM INVOICES')).values as Invoice[];
-        return result; // add error checking
     }
 
     // Gets invoices by invoice number
@@ -205,156 +197,20 @@ export class StorageService {
         }
     }
 
-    // Gets invoice by customer ID
-    async getInvoicesbyCustNo(custNo: number) {
-        const result: Invoice[] = (await this.db.query('SELECT * FROM invoices WHERE custNo = ?', [custNo])).values as Invoice[];
-        if (result.length > 0) {
-            return result;
-        } else {
-            return null;
-        }
-    }
-
-    // Log Return by ItemNo and OrderNo
-    async logReturn(itemNo: number, orderNo: number, returnsNo: number, generalNote: string | null) {
-        var invoice = this.getInvoicebyOrderNo(orderNo);
-        var item = this.getSingleInvoiceItem(itemNo, orderNo);
-        if (item != null && invoice != null) {
-            await this.db.run('UPDATE invoiceitems SET returnsNo = ? WHERE orderNo = ?', [returnsNo, orderNo]);
-            if (generalNote != null) {
-                await this.db.run('UPDATE invoices SET generalNote = ? WHERE orderNo = ?', [generalNote, orderNo]);
-            }
-            await this.loadData();
-        } else {
-            await Toast.show({
-                text: 'Error logging return!',
-                duration: 'short',
-                position: 'bottom'
-            });
-        }
-    }
-
-    async logReturns( items: { itemNo: number, orderNo: number, returnsNo: number, generalNote: string | null}[]) {
-        try {
-            //await this.db.execute('BEGIN TRANSACTION;');
-
-            for (const item of items) {
-                const { itemNo, orderNo, returnsNo, generalNote } = item;
-                await this.db.run(
-                    'UPDATE invoiceitems SET returnsNo = ? WHERE itemNo = ? AND orderNo = ?',
-                    [returnsNo, itemNo, orderNo]);
-
-                if (generalNote != null) {
-                    await this.db.run(
-                        'UPDATE invoices SET generalNote = ? WHERE orderNo = ?',
-                        [generalNote, orderNo]
-                    );
-                }
-            }
-
-            //await this.db.execute('COMMIT');
-            await this.loadData();
-        } catch (error) {
-            await this.db.execute('ROLLBACK');
-            await Toast.show({
-                text: 'Error logging returns!',
-                duration: 'short',
-                position: 'bottom',
-            });
-        }
-    }
-
-    // Log Discrepency by ItemNo and OrderNo
-    async logDiscrepency(itemNo: number, orderNo: number, discrepencies: number, generalNote: string | null) {
-        var invoice = this.getInvoicebyOrderNo(orderNo);
-        var item = this.getSingleInvoiceItem(itemNo, orderNo);
-        if (item != null && invoice != null) {
-            await this.db.run('UPDATE invoiceitems SET discrepancies = ? WHERE orderNo = ?', [discrepencies, orderNo]);
-            if (generalNote != null) {
-                await this.db.run('UPDATE invoices SET generalNote = ? WHERE orderNo = ?', [generalNote, orderNo]);
-            }
-            await this.loadData();
-        } else {
-            await Toast.show({
-                text: 'Error logging discrepancy!',
-                duration: 'short',
-                position: 'bottom'
-            });
-        }
-    }
-
-    // Log Credit Notes
-    async logCreditNote(itemNo: number, orderNo: number, creditNotes: number, generalNote: string | null) {
-        var invoice = this.getInvoicebyOrderNo(orderNo);
-        var item = this.getSingleInvoiceItem(itemNo, orderNo);
-        if (item != null && invoice != null) {
-            await this.db.run('UPDATE invoiceitems SET creditNotes = ? WHERE orderNo = ?', [creditNotes, orderNo]);
-            if (generalNote != null) {
-                await this.db.run('UPDATE invoices SET generalNote = ? WHERE orderNo = ?', [generalNote, orderNo]);
-            }
-            await this.loadData();
-        } else {
-            await Toast.show({
-                text: 'Error logging credit note!',
-                duration: 'short',
-                position: 'bottom'
-            });
-        }
-    }
-
-    // Mark Invoice Delivered
-    async updateInvoiceStatus(invoiceNo: number, status: string) {
-        var invoice = this.getInvoice(invoiceNo);
-        if (invoice != null) {
-            await this.db.run('UPDATE invoices SET generate = ? WHERE invoiceNo = ?', [status, invoiceNo])
-            await this.loadData();
-        } else {
-            await Toast.show({
-                text: 'Error updating delivery status!',
-                duration: 'short',
-                position: 'bottom'
-            });
-        }
-    }
-
     // Loads Invoices Data into homePageList
-    async loadHomePageData() {
-        //const result = await this.db.query(`SELECT i.*, c.company FROM invoices i JOIN customers c ON i.custNo = c.id;`);
-        //this.homePageList.next(result.values || []);
+    async loadAllInvoices() {
+        const result = await this.db.query(`SELECT * FROM invoices`)
+        this.invoiceList.next(result.values || []);
     }
 
-    // Loads Returns Data into returnsList
-    async loadReturnsData() {
-        // const result = (await this.db.query('SELECT inv.*, inv_item.* FROM invoices inv JOIN invoiceitems inv_item ON inv.orderNo = inv_item.orderNo WHERE inv_item.returnsNo > 0'))
-        // const results = result.values
-        // if (results != null) {
-        //     const grouped: any = {};
-
-        //     results.forEach(row => {
-        //         const orderNo = row.orderNo;
-        //         if (!grouped[orderNo]) {
-        //             grouped[orderNo] = {
-        //                 ...row,
-        //                 items: []
-        //             };
-        //         }
-        //         grouped[orderNo].items.push({
-        //             'itemNo': row.itemNo,
-        //             'returnsNo': row.returnsNo,
-        //             'discrepancies': row.discrepancies,
-        //         });
-        //     });
-
-        //     const groupedArr = Object.values(grouped);
-        //     //this.returnsList.next(groupedArr);
-        // } else {
-        //    // this.returnsList.next([]);
-        // }
+    async loadAllInvoiceItems() {
+        const result = await this.db.query(`SELECT * FROM invoiceitems`)
+        this.invoiceItemList.next(result.values || [])
     }
 
     // Refreshes All Data
     async loadData() {
-        await Promise.all([this.loadHomePageData(), this.loadReturnsData()]);
+        await Promise.all([this.loadAllInvoices(), this.loadAllInvoiceItems()]);
         this.isDatabaseReady.next(true);
     }
 
@@ -376,5 +232,4 @@ export class StorageService {
         }
     }
     
-
 }
