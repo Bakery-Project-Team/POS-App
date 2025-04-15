@@ -18,6 +18,9 @@ export class DataService {
   constructor(private storage: StorageService, private http: HttpClient) {}
 
   async fetchData(invoiceNo: string) {
+    this.invoiceList = [];
+    this.invoiceItemList = [];
+
     const url = `${this.baseURL}/${invoiceNo}`
 
     this.http.get(url).subscribe({
