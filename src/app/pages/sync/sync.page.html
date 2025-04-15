@@ -1,3 +1,7 @@
+  <ion-card>
+    <ion-card-title>Download Data</ion-card-title>
+  </ion-card>
+
 <ion-header [translucent]="true">
   <ion-toolbar>
     <ion-buttons slot="start">
@@ -12,9 +16,15 @@
 <ion-content [fullscreen]="true">
   <ion-card>
     <ion-card-title>Download Data</ion-card-title>
-    <ion-item>
-      <ion-input [(ngModel)]="invoiceNo" label="Invoice Number" labelPlacement="stacked" placeholder="Enter number"></ion-input>
-    </ion-item>
-    <ion-button (click)="downloadAndSave()" >Download</ion-button>
+
+    <ion-card-content>
+      <ion-item>
+        <ion-input [(ngModel)]="invoiceNo" label="Invoice Number" labelPlacement="stacked" placeholder="Enter number"></ion-input>
+      </ion-item>
+    </ion-card-content>
+
+    <div class="download-button-container">
+      <ion-button class="download-button" (click)="downloadAndSave()" color="tertiary">Download</ion-button>
+    </div>
   </ion-card>
 </ion-content>

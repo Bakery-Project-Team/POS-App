@@ -1,0 +1,28 @@
+<ion-list>
+  <ion-item button (click)="selectFilter('Today')">Today</ion-item>
+  <ion-item button (click)="selectFilter('All')">All</ion-item>
+  <ion-item button (click)="selectFilter('Range')">Date Range</ion-item>
+  <ion-item button (click)="selectFilter('Date')">Specific Date</ion-item>
+
+</ion-list>
+
+<ion-list *ngIf="showDateRange">
+  <ion-item>
+    <ion-datetime [(ngModel)]="startDate" presentation="date"></ion-datetime>
+  </ion-item>
+
+  <ion-item>
+    <ion-label position="stacked">To</ion-label>
+    <ion-datetime [(ngModel)]="endDate" presentation="date"></ion-datetime>
+  </ion-item>
+
+  <ion-button expand="block" (click)="applyRange()">Apply</ion-button>
+</ion-list>
+
+<ion-list *ngIf="showSingleDatePicker">
+  <ion-item>
+    <ion-datetime [(ngModel)]="date" presentation="date"></ion-datetime>
+  </ion-item>
+
+  <ion-button expand="block" (click)="applyDate()">Apply</ion-button>
+</ion-list>
