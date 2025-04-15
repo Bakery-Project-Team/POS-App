@@ -20,9 +20,15 @@ import { DataService } from '../../services/database/data.service';
   imports: [IonicModule, CommonModule, FormsModule],
 })
 
-export class HomePage implements OnInit {
+ export class HomePage implements OnInit {
   invoices!: Invoice[];
   invoiceItems!: InvoiceItem[];
+
+   cartItems: InvoiceItem[] = [];
+   subTotal: number = 0;
+   currOrderNo: number = 0;
+   invoiceItemFrequencies: Map<number, number> = new Map();
+   sortedInvoiceItems: InvoiceItem[] = [];
 
   subTotal: number = 0;
   currOrderNo: number = 0;
@@ -48,8 +54,6 @@ export class HomePage implements OnInit {
       this.currentQuantityArr = new Array(this.invoiceItems.length).fill(0);
     })
   }
-
-
 
   // async loadAllInvoiceItems() {
   //   try{
