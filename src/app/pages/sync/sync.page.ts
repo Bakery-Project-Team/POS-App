@@ -15,7 +15,6 @@ import { ToastController } from '@ionic/angular';
 })
 export class SyncPage implements OnInit {
   selectedDate: string = '';
-  routeNo: string = '';
   invoiceNo: string = '';
   baseURL: string = "http://3.208.13.82:2078/akiproorders/downloadinvoices"
 
@@ -51,7 +50,6 @@ export class SyncPage implements OnInit {
 
     await loading.present();
     try {
-      const route = `route${this.routeNo}`
       await this.data.fetchData(this.invoiceNo);
     } catch(err) {
       console.log('Ionic Download failed: ', err);

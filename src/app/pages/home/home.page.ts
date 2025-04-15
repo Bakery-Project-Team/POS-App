@@ -38,7 +38,6 @@ import { DataService } from '../../services/database/data.service';
   async ngOnInit() {
     await this.loadAllInvoiceItems();
 
-    
   }
 
  /* async loadInvoiceItems(invoiceNo: string) {               // this method was used to load a single invoice before(it works for testing just uncomment and use any invoice number)
@@ -67,24 +66,25 @@ import { DataService } from '../../services/database/data.service';
   async loadAllInvoiceItems() {
     try{
       const invoices = await this.storage.getAllInvoices();
+      if (invoices != null) {
 
-      for(const invoice of invoices){
+        for(const invoice of invoices){
 
-        await this.dataService.fetchData(invoice.invoiceNo.toString()); // get data from DB
-        const items = await this.storage.getInvoiceItems(invoice.orderNo);
-
-        if (items) {
-          items.forEach(item => {   // update frequency map
-            const currentFreq = this.invoiceItemFrequencies.get(item.itemNo) || 0;
-            this.invoiceItemFrequencies.set(item.itemNo, currentFreq + item.quantity);
+          const items = await this.storage.getInvoiceItems(invoice.orderNo);
+  
+          if (items) {
+            items.forEach(item => {   // update frequency map
+              const currentFreq = this.invoiceItemFrequencies.get(item.itemNo) || 0;
+              this.invoiceItemFrequencies.set(item.itemNo, currentFreq + item.quantity);
+            });
+  
+             // Add unique items to our items list
+          items.forEach(item => {
+            if (!this.invoiceItems.some(existing => existing.itemNo === item.itemNo)) {
+              this.invoiceItems.push(item);
+            }
           });
-
-           // Add unique items to our items list
-        items.forEach(item => {
-          if (!this.invoiceItems.some(existing => existing.itemNo === item.itemNo)) {
-            this.invoiceItems.push(item);
-          }
-        });
+        }
       }
     }
 

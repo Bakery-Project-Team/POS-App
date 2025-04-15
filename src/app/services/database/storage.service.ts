@@ -182,7 +182,11 @@ export class StorageService {
     // used to pull all invoice records from database
     async getAllInvoices(){
         const result: Invoice[] = (await this.db.query('SELECT * FROM INVOICES')).values as Invoice[];
-        return result; // add error checking
+        if (result.length > 0) {
+            return result;
+        } else {
+            return null;
+        }
     }
 
     // Gets invoices by invoice number
