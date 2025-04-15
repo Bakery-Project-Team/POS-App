@@ -165,23 +165,34 @@ import { DataService } from '../../services/database/data.service';
           frequency: 1
         }));
   
-        
         await this.storage.addFrequency(freqUpdates);
         console.log('Frequencies updated successfully.');
   
-        
+        // Prepare sale records for inv table
+        const saleRecords = this.cartItems.map(cartItem => ({
+          itemNo: cartItem.itemNo,
+          orderNo: cartItem.orderNo,  
+          quantity: cartItem.quantity
+        }));
+  
+        await this.storage.addSale(saleRecords);
+        console.log('Sales recorded in inv successfully.');
+  
         this.cartItems = [];
         this.subTotal = 0;
   
-        
         const frequencies = await this.storage.getFrequencies();
         console.log('Current frequencies:', frequencies);
+
+        const sales = await this.storage.getSales();
+        console.log('Current inv table:', sales)
   
       } catch (error) {
         console.error('Error confirming sale:', error);
       }
     }
   }
+  
   
 
    removeFromCart(index: number) { 
