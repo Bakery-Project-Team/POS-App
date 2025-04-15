@@ -70,3 +70,34 @@ ion-card {
   border-radius: 16px;
   background-color: #273746;
 }
+
+.item-list {
+  border: 1px solid #eee;
+  border-radius: 8px;
+  margin: 10px;
+  background-color: #273746; 
+}
+
+ion-content {
+  --padding-top: 10px;
+  --padding-bottom: 10px;
+}
+
+.Cart-Items-Summary {
+  border-radius: 8px;
+  margin-bottom: 10px;
+  background-color: #273746;
+
+  ion-list {
+    padding: 0;
+  }
+}
+
+.subtotal-item {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  --background: #273746;
+  margin-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}

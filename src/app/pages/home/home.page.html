@@ -12,10 +12,10 @@
 </ion-header>
 
 
-
+<ion-content>
 
 <!-- Item List -->
-<ion-list class="item-list">
+<ion-list class="item-list" style="max-height: 50vh; overflow-y: auto;">
   <ion-item *ngFor="let item of invoiceItems; let i = index">
     <ion-label>
       <h2>Item #{{ item.itemNo }}</h2>
@@ -36,6 +36,9 @@
     <ion-card-title>Summary</ion-card-title>
   </ion-card-header>
   <ion-card-content>
+    <div class="Cart-Items-Summary">
+      <ion-label>Items in Cart: {{ cartItems.length }}</ion-label>
+      <ion-note slot="end">Total: $TTD{{ subTotal | number:'1.2-2' }}</ion-note>
     <ion-list lines="full">
       <ion-item *ngFor="let item of cartItems; let i = index">
         <ion-label>
@@ -53,14 +56,18 @@
         </div>
         <ion-note slot="end">${{ item.price * item.quantity | number:'1.2-2' }}</ion-note>
       </ion-item>
-      <ion-item>
-        <ion-label><strong>Sub Total</strong></ion-label>
-        <ion-note slot="end"><strong>$TTD{{ subTotal | number:'1.2-2' }}</strong></ion-note>
-      </ion-item>
     </ion-list>
-  </ion-card-content>
+  </div>
+  
+  <!-- Fixed Subtotal at bottom -->
+  <ion-item class="subtotal-item">
+    <ion-label><strong>Sub Total</strong></ion-label>
+    <ion-note slot="end"><strong>$TTD{{ subTotal | number:'1.2-2' }}</strong></ion-note>
+  </ion-item>
+</ion-card-content>
 </ion-card>
 
-<ion-button (click)="confirmSale()" expand="block" color="primary" class="confirm-button"> Confirm Sale</ion-button>
-
-
+<ion-button (click)="confirmSale()" expand="block" color="primary" class="confirm-button">
+Confirm Sale
+</ion-button>
+</ion-content>
