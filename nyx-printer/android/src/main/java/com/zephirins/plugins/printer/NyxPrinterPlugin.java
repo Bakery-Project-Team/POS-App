@@ -72,4 +72,59 @@ public class NyxPrinterPlugin extends Plugin {
         ret.put("connected", printerService != null);
         call.resolve(ret);
     }
+
+    @PluginMethod
+    public void getPrinterStatus(PluginCall call) {
+        JSObject ret = new JSObject();
+        if (printerService == null) {
+            ret.put("status", -1);
+            call.resolve(ret);
+            return;
+        }
+
+        try {
+            int status = printerService.getPrinterStatus();
+            ret.put("status", status);
+            call.resolve(ret);
+        } catch (RemoteException e) {
+            call.reject("Failed to get printer status", e);
+        }
+    }
+
+    @PluginMethod
+    public void restartPrinter(PluginCall call) {
+        try {
+            if (printerService != null) {
+                getContext().unbindService(connService);
+                printerService = null;
+            }
+            Thread.sleep(500);
+            load();
+            JSObject ret = new JSObject();
+            ret.put("success", true);
+            call.resolve(ret);
+        } catch (Exception e) {
+            call.reject("Failed to restart printer", e);
+        }
+    }
+
+    @PluginMethod
+    public void getPrinterModel(PluginCall call) {
+        JSObject ret = new JSObject();
+        if(printerService == null) {
+            call.reject("Printer service not connected");
+            return;
+        }
+
+        try {
+            String[] model = new String[1];
+            int result = printerService.getPrinterModel(model);
+
+            ret.put("result", result);
+            ret.put("model", model[0]);
+            call.resolve(ret);
+        } catch (RemoteException e) {
+            call.reject("Failed to get printer model", e);
+        }
+    }
 }

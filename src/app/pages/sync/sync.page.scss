@@ -1,0 +1,64 @@
+ion-header {
+    padding-top: 24px;
+}
+
+ion-card {
+    background-color: var(--ion-color-primary);
+}
+
+ion-card-title {
+    padding-top: 10px;
+    text-align: center;
+    border-bottom: 1px solid;
+}
+
+ion-list {
+    padding: 0px;
+    max-height: 20vh;
+    height: auto;
+    overflow-y: scroll;
+    background-color: transparent;
+    width: auto;
+    border-radius: 10px;
+}
+
+ion-item {
+    background-color: var(--ion-color-tertiary);
+}
+
+ion-radio {
+    background-color: var(--ion-color-tertiary);
+    --background: transparent
+}
+
+ion-datetime {
+    justify-content: center;
+    background-color: var(--ion-color-tertiary);
+    border-radius: 10px;
+}
+
+.datetime-container {
+    display: flex;
+    justify-content: center;
+}
+
+.download-button-container {
+    display: flex;
+    justify-content: center;
+}
+
+.download-button {
+    padding-top: 10px;
+    padding-bottom: 10px;
+    width: 90%;
+}
+
+.upload-container {
+    display: flex;
+    justify-content: center;
+}
+
+.upload-button{
+    width: 95%;
+    height: 8vh;
+}
