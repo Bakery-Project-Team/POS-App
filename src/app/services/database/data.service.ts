@@ -42,6 +42,7 @@ export class DataService {
         await this.storage.addInvoiceItems(this.invoiceItemList);
         this.orderNo = this.invoiceList[0].orderNo;
         await this.storage.saveMetadata('order_number', this.orderNo.toString());
+        await this.storage.loadData();
       },
       error: (error) => console.log("Ionic Error requesting: ", error.message)
     });

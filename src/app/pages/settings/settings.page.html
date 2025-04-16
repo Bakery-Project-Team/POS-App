@@ -11,19 +11,19 @@
 
 <ion-content [fullscreen]="true">
   <ion-list [inset]="true">
-    <ion-card color="primary">
+    <ion-card color="tertiary">
       <ion-item color="translucent">
         <ion-icon name="wifi" slot="start"></ion-icon>
         <ion-label>WiFi Status: {{wifiStatus}}</ion-label>
-        <ion-button slot="end" shape="round" color="secondary" (click)="refreshWiFiStatus()"> 
+        <ion-button slot="end" shape="round" color="success" (click)="refreshWiFiStatus()"> 
           <ion-icon name="refresh" slot="end"></ion-icon>
           Refresh
         </ion-button>
       </ion-item>
     </ion-card>
 
-    <ion-card color="primary">
-      <ion-item color="translucent">
+    <ion-card color="tertiary">
+      <ion-item color="translucent" lines="none">
         <ion-icon name="print" slot="start"></ion-icon>
         <ion-label>Printer: {{printerName}}</ion-label>
       </ion-item>
@@ -31,7 +31,7 @@
       <ion-item color="translucent">
         <ion-icon slot="start"></ion-icon>
         <ion-label>Status: {{printerStatus}}</ion-label>
-        <ion-button slot="end" shape="round" color="secondary" (click)="restartPrintService()">
+        <ion-button slot="end" shape="round" color="success" (click)="restartPrintService()">
           <ion-icon name="refresh" slot="end"></ion-icon>
           Restart
         </ion-button>

@@ -1,68 +1,44 @@
-<ion-header>
-  <ion-toolbar>
-    <ion-title>
-      POINT OF SALE APPLICATION
-    </ion-title>
-    <ion-buttons slot="end">
-      <ion-button>
-        <ion-icon name="notifications-outline"></ion-icon>
-      </ion-button>
-    </ion-buttons>
-  </ion-toolbar>
-</ion-header>
-
-
 <ion-content>
-  <!-- <ion-list class="item-list">
-    <ion-item *ngFor="let item of invoiceItems; let i = index">
-      <ion-label>
-        <h2>Item #{{ item.itemNo }}</h2>
-        <h3>{{ item.partNo }}</h3>
-        <p>$TTD{{ item.price }}</p>
-      </ion-label>
-      <div class="quantity-controls">
-        <ion-button fill="clear" (click)="addToCart(item)">
-          <ion-icon name="add-circle-outline"></ion-icon>
-        </ion-button>
-      </div>
-    </ion-item>
-  </ion-list> -->
-
-  <ion-row class="heading-row">
-    <ion-col><b>Item</b></ion-col>
-    <ion-col class="quantity-col"><b>Qty</b></ion-col>
-  </ion-row>
-
-  <ion-grid>
-    <ion-row *ngFor="let item of invoiceItems; let i = index">
-      <ion-col class="item-info">
-        <div><b>{{ item.itemNo }}</b></div>
-        <div>{{ item.partNo }}</div>
-        <div>${{ item.price.toFixed(2) }}</div>
-      </ion-col>
-
-      <ion-col>
-        <div class="quantity-toggle">
-          <ion-button size="small" (click)="removeFromCart(i)">-</ion-button>
-
-          <ion-input type="number" [(ngModel)]="currentQuantityArr[i]" (ionChange)="validateInput(i)" [ngClass]="{
-            'valid-input': currentQuantityArr[i] <= itemQuantityArr[i] && currentQuantityArr[i] >= 0,
-            'invalid-input': currentQuantityArr[i] > itemQuantityArr[i] || currentQuantityArr[i] < 0
-          }" min="0" style="width: 60px; text-align: center;"></ion-input>
-
-          <ion-button size="small" (click)="addToCart(i)">+</ion-button>
-        </div>
-      </ion-col>
+    <ion-row class="heading-row">
+      <ion-col><b>Item</b></ion-col>
+      <ion-col class="quantity-col"><b>Quantity</b></ion-col>
     </ion-row>
-  </ion-grid>
-
+  
+    <ion-grid>
+      <ion-row *ngFor="let item of invoiceItems; let i = index">
+        <ion-col class="item-info">
+          <div><b>{{ item.itemNo }}</b></div>
+          <div>{{ item.partNo }}</div>
+          <div>${{ item.price.toFixed(2) }}</div>
+        </ion-col>
+  
+        <ion-col>
+          <div class="quantity-toggle">
+            <ion-button size="small" (click)="removeFromCart(i)" color="tertiary" [disabled]="currentQuantityArr[i] == 0">
+              <ion-icon name="remove-circle-outline"></ion-icon>
+            </ion-button>
+  
+            <ion-input type="number" [(ngModel)]="currentQuantityArr[i]" (ionChange)="validateInput(i)" [ngClass]="{
+              'valid-input': currentQuantityArr[i] <= itemQuantityArr[i] && currentQuantityArr[i] >= 0,
+              'invalid-input': currentQuantityArr[i] > itemQuantityArr[i] || currentQuantityArr[i] < 0
+            }" min="0" style="width: 60px; text-align: center;"></ion-input>
+  
+            <ion-button size="small" (click)="addToCart(i)" color="tertiary" [disabled]="currentQuantityArr[i] >= itemQuantityArr[i]">
+              <ion-icon name="add-circle-outline"></ion-icon>
+            </ion-button>
+          </div>
+        </ion-col>
+      </ion-row>
+    </ion-grid>
+  
 </ion-content>
+
 
 <ion-content>
   <!-- Summary Section -->
   <ion-card class="summary-card">
     <ion-card-header>
-      <ion-card-title>Summary</ion-card-title>
+      <ion-card-title>Cart Summary</ion-card-title>
     </ion-card-header>
 
     <ion-card-content>
@@ -76,13 +52,13 @@
 
           <ion-col>
             <div class="quantity-toggle">
-              <ion-button size="small" (click)="removeFromCart(i)">
+              <ion-button size="small" (click)="removeFromCart(i)" color="tertiary">
                 <ion-icon name="remove-circle-outline"></ion-icon>
               </ion-button>
 
               <ion-label>{{currentQuantityArr[i]}}</ion-label>
 
-              <ion-button size="small" (click)="addToCart(i)">
+              <ion-button size="small" (click)="addToCart(i)" color="tertiary">
                 <ion-icon name="add-circle-outline"></ion-icon>
               </ion-button>
             </div>
@@ -90,8 +66,8 @@
         </ion-row>
       </ion-grid>
 
-      <ion-item>
-        <ion-label><strong>Sub Total</strong></ion-label>
+      <ion-item color="transparent">
+        <ion-label ><strong>Subtotal</strong></ion-label>
         <ion-note slot="end"><strong>$TTD{{ subTotal | number:'1.2-2' }}</strong></ion-note>
       </ion-item>
     </ion-card-content>
@@ -99,5 +75,5 @@
   </ion-card>
 </ion-content>
 
-<ion-button (click)="confirmSale()" expand="block" color="primary" class="confirm-button"> Confirm Sale</ion-button>
+<ion-button (click)="confirmSale()" expand="block" color="primary" class="confirm-button" color="success"> Confirm Sale</ion-button>
 <!-- Item List -->
