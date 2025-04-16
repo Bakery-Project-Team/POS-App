@@ -21,10 +21,16 @@ import { inventory } from 'src/app/models/inventory';
   imports: [IonicModule, CommonModule, FormsModule],
 })
 
-export class HomePage implements OnInit {
+ export class HomePage implements OnInit {
   invoices!: Invoice[];
   invoiceItems!: InvoiceItem[];
   salesList!: inventory[];
+
+   cartItems: InvoiceItem[] = [];
+   subTotal: number = 0;
+   currOrderNo: number = 0;
+   invoiceItemFrequencies: Map<number, number> = new Map();
+   sortedInvoiceItems: InvoiceItem[] = [];
 
   subTotal: number = 0;
   currOrderNo: number = 0;
@@ -67,8 +73,6 @@ export class HomePage implements OnInit {
       });
     });
   }
-
-
 
   // async loadAllInvoiceItems() {
   //   try{
