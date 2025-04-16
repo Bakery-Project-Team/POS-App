@@ -1,0 +1,55 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>Payment</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="cancel()">
+        <ion-icon name="close"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <ion-card>
+    <ion-card-header>
+      <ion-card-title>Total Amount: ${{ total.toFixed(2) }}</ion-card-title>
+    </ion-card-header>
+
+
+    <ion-card-content>
+      <ion-segment [(ngModel)]="paymentMethod">
+        <ion-segment-button value="cash">
+          <ion-label>Cash</ion-label>
+        </ion-segment-button>
+        <ion-segment-button value="card">
+          <ion-label>Card</ion-label>
+        </ion-segment-button>
+      </ion-segment>
+
+
+
+      <div *ngIf="paymentMethod === 'cash'" class="ion-padding">
+        <ion-item>
+          <ion-label position="stacked">Cash Amount</ion-label>
+          <ion-input 
+            type="number" 
+            [(ngModel)]="cashAmount" 
+            (ionInput)="calcChange()"
+            placeholder="Enter amount received">
+          </ion-input>
+        </ion-item>
+
+        <ion-item *ngIf="change >= 0">
+          <ion-label>Change Due</ion-label>
+          <ion-note slot="end" color="primary">${{ change.toFixed(2) }}</ion-note>
+        </ion-item>
+      </div>
+
+      <div class="ion-padding">
+        <ion-button expand="block" (click)="confirmPayment()" [disabled]="paymentMethod === 'cash' && cashAmount < total">
+          Confirm Payment
+        </ion-button>
+      </div>
+    </ion-card-content>
+  </ion-card>
+</ion-content>
