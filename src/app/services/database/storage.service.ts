@@ -14,7 +14,8 @@ import { inventory } from 'src/app/models/inventory';
 @Injectable()
 export class StorageService {
     public invoiceList: BehaviorSubject<Invoice[]> = new BehaviorSubject<Invoice[]>([]);
-    public invoiceItemList: BehaviorSubject<InvoiceItem[]> = new BehaviorSubject<InvoiceItem[]>([]);
+    public invoiceItemList: BehaviorSubject<any[]> = new BehaviorSubject<any[]>([]);
+    public salesList: BehaviorSubject<inventory[]> = new BehaviorSubject<inventory[]>([]);
 
     private databaseName: string = "";
     private uUpdStmts: UserUpgradeStatements = new UserUpgradeStatements();
@@ -104,34 +105,15 @@ export class StorageService {
         await this.loadData();
     }
 
-    async addFrequency(freq: { item_number: number; frequency: number }[]) {
-        try {
-          //console.log('Starting frequency update for:', freq);
-      
-          for (const frequency of freq) {
-            console.log('Processing itemNo:', frequency.item_number);
-            const sql = `
-              INSERT INTO freq (itemNo, frequency)
-              VALUES (${frequency.item_number}, 1)
-              ON CONFLICT(itemNo) DO UPDATE 
-              SET frequency = frequency + 1;
-            `;
-            console.log('Executing SQL:', sql);
-            await this.db.execute(sql, true);
-            console.log('Query executed for itemNo:', frequency.item_number);
-          }
-      
-          console.log('All queries executed.');
-          await this.loadData();
-          console.log('Frequency update complete.');
-          return true; 
-        } catch (error) {
-          console.error('Error updating frequencies:', error);
-          throw error;
-        }
-      }
-      
-      
+    async addFrequencies(frequencies: frequency[]) {
+        const sql = `INSERT INTO freq (itemNo, frequency, quantity) VALUES `;
+        var values = frequencies.map(item => `(${item.item_number}, ${item.frequency}, ${item.quantity})`).join(",\n");
+        values += ';'
+        
+        await this.db.execute(sql + values);
+    }
+
+
     // Adds a list of invoices
     async addInvoices(invoices: Invoice[]) {
         const sql = `INSERT INTO invoices (invoiceNo, orderNo, custNo, routeNo, standingDay, invoiceDate, generate, generalNote, custDiscount, taxRate, terms,
@@ -147,16 +129,16 @@ export class StorageService {
 
     async addSale(sales: { itemNo: number, orderNo: number, quantity: number }[]) {
         if (sales.length === 0) return;
-      
+
         const sql = `INSERT INTO inv (itemNo, orderNo, quantity) VALUES `;
-      
+
         const values = sales.map(sale =>
-          `(${sale.itemNo}, ${sale.orderNo}, ${sale.quantity})`
+            `(${sale.itemNo}, ${sale.orderNo}, ${sale.quantity})`
         ).join(",\n");
-      
+
         await this.db.execute(sql + values + ';');
     }
-      
+
     // Gets all items on an invoice by order number
     async getInvoiceItems(orderNo: number) {
         const result: InvoiceItem[] = (await this.db.query('SELECT * FROM invoiceitems WHERE orderNo = ?', [orderNo])).values as InvoiceItem[];
@@ -208,10 +190,47 @@ export class StorageService {
         this.invoiceItemList.next(result.values || [])
     }
 
+    async loadAllSales() {
+        const result = await this.db.query(`SELECT * FROM inv`)
+        this.salesList.next(result.values || [])
+    }
+
     // Refreshes All Data
     async loadData() {
-        await Promise.all([this.loadAllInvoices(), this.loadAllInvoiceItems()]);
+        await Promise.all([this.loadAllInvoices(), this.loadAllInvoiceItems(), this.loadAllSales()]);
         this.isDatabaseReady.next(true);
+    }
+
+    async loadAllInvoiceItemsByFrequency() {
+        const orderNumberResult = (await this.db.query(`SELECT value FROM app_metadata WHERE key = 'order_number' LIMIT 1`));
+
+        if (!orderNumberResult || !orderNumberResult.values || orderNumberResult.values.length === 0) {
+            console.log('No invoice number found in app_metadata');
+            return;
+        }
+
+        const orderNumberString = orderNumberResult.values[0].value;
+        const orderNo = parseInt(orderNumberString, 10);
+
+        console.log(orderNo);
+
+        const result: any[] = (await this.db.query(`SELECT i.*, COALESCE(SUM(s.frequency), 0) AS frequency, COALESCE(SUM(s.quantity), 0) AS salesQuantity FROM invoiceitems i LEFT JOIN freq s ON i.itemNo = s.itemNo WHERE i.orderNo = ? GROUP BY i.itemNo ORDER BY frequency DESC, salesQuantity DESC`, [orderNo])).values as any[];
+        const invoiceItemList = [];
+        for (let i = 0; i < result.length; i++) {
+            invoiceItemList.push({
+                item_number: result[i].itemNo,
+                frequency: result[i].frequency,
+                ...result[i]
+            })
+        }
+
+        console.log(invoiceItemList);
+        this.invoiceItemList.next(invoiceItemList || []);
+    }
+
+    async saveMetadata(key: String, value: String) {
+        const sql = `INSERT OR REPLACE INTO app_metadata (key, value) VALUES (?, ?);`;
+        await this.db.run(sql, [key, value]);
     }
 
     async getFrequencies() {
@@ -231,5 +250,7 @@ export class StorageService {
             return null;
         }
     }
-    
+
+
+
 }
