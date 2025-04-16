@@ -1,4 +1,4 @@
-package ionic.deliverymanagement;
+package ionic.posapp;
 
 import com.getcapacitor.BridgeActivity;
 

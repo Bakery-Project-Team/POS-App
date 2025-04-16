@@ -1,8 +1,8 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'io.ionic.starter',
-  appName: 'ionic-app-base',
+  appId: 'ionic.posapp',
+  appName: 'POS',
   webDir: 'www/browser',
   android: {
     allowMixedContent: true,

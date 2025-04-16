@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">deliverymanagement</string>
-    <string name="title_activity_main">deliverymanagement</string>
-    <string name="package_name">ionic.deliverymanagement</string>
-    <string name="custom_url_scheme">ionic.deliverymanagement</string>
+    <string name="app_name">POS</string>
+    <string name="title_activity_main">POS</string>
+    <string name="package_name">ionic.posapp</string>
+    <string name="custom_url_scheme">ionic.posapp</string>
 </resources>

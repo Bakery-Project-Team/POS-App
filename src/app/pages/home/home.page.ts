@@ -13,6 +13,7 @@ import { PopoverController } from "@ionic/angular";
 import { DataService } from '../../services/database/data.service';
 import { inventory } from 'src/app/models/inventory';
 import { PaymentComponent } from '../../components/payment/payment.component';
+import { NyxPrinter } from 'nyx-printer/src';
 
 
 @Component({
@@ -69,39 +70,6 @@ export class HomePage implements OnInit {
       });
     });
   }
-
-
-
-  // async loadAllInvoiceItems() {
-  //   try{
-  //       for(const invoice of invoices){
-
-  //         const items = await this.storage.getInvoiceItems(invoice.orderNo);
-
-  //         if (items) {
-  //           items.forEach(item => {   // update frequency map
-  //             const currentFreq = this.invoiceItemFrequencies.get(item.itemNo) || 0;
-  //             this.invoiceItemFrequencies.set(item.itemNo, currentFreq + item.quantity);
-  //           });
-
-  //            // Add unique items to our items list
-  //         items.forEach(item => {
-  //           if (!this.invoiceItems.some(existing => existing.itemNo === item.itemNo)) {
-  //             this.invoiceItems.push(item);
-  //           }
-  //         });
-  //       }
-  //     }
-  //   }
-
-
-
-  //   await this.sortInvoiceItems();
-  //   console.log('Sorted items by frequency:', this.invoiceItems);
-  // } catch (error) {
-  //   console.error('Error loading invoice data:', error);
-  // }
- 
 
 
 
@@ -202,6 +170,21 @@ export class HomePage implements OnInit {
       quantity: cartItem.selectedQuantity
     }));
 
+
+    var receipt = `Confirmation of Sale\nItems:\n`;
+    saleRecords.forEach(record => receipt += `${record.itemNo} x ${record.quantity} units\n`);
+    receipt += `Total: ${this.subTotal}\n\n\n______________________\n    Signature\n\n\n`
+
+    console.log(receipt);
+
+    NyxPrinter.isReady().then(res => {
+      if (res.connected) {
+        NyxPrinter.printText({ text: receipt });
+      } else {
+        console.error('Printer service not ready yet');
+      }
+    });
+
     await this.storage.addFrequencies(freqUpdates);
     console.log('Frequencies updated successfully.');
 
@@ -210,40 +193,6 @@ export class HomePage implements OnInit {
      this.calculateSubtotal();
     await this.storage.loadData();
     
-    // if (this.cartItems.length > 0) {
-
-    //     // Prepare frequency update list
-    //     const freqUpdates = this.cartItems.map(cartItem => ({
-    //       item_number: cartItem.itemNo,
-    //       frequency: 1
-    //     }));
-
-    //     await this.storage.addFrequency(freqUpdates);
-    //     console.log('Frequencies updated successfully.');
-
-    //     // Prepare sale records for inv table
-    //     const saleRecords = this.cartItems.map(cartItem => ({
-    //       itemNo: cartItem.itemNo,
-    //       orderNo: cartItem.orderNo,  
-    //       quantity: cartItem.quantity
-    //     }));
-
-    //     await this.storage.addSale(saleRecords);
-    //     console.log('Sales recorded in inv successfully.');
-
-    //     this.cartItems = [];
-    //     this.subTotal = 0;
-
-    //     const frequencies = await this.storage.getFrequencies();
-    //     console.log('Current frequencies:', frequencies);
-
-    //     const sales = await this.storage.getSales();
-    //     console.log('Current inv table:', sales)
-
-    //   } catch (error) {
-    //     console.error('Error confirming sale:', error);
-    //   }
-    // }
   }
   }
 

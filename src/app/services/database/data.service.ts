@@ -4,6 +4,8 @@ import { Customer } from '../../models/customer';
 import { InvoiceItem } from '../../models/invoice_item';
 import { Invoice } from '../../models/invoice';
 import { HttpClient } from '@angular/common/http';
+import { NyxPrinter } from 'nyx-printer/src';
+
 
 @Injectable({
   providedIn: 'root'
@@ -43,6 +45,18 @@ export class DataService {
         this.orderNo = this.invoiceList[0].orderNo;
         await this.storage.saveMetadata('order_number', this.orderNo.toString());
         await this.storage.loadData();
+
+        var receipt = `Confirmation of Download\nInvoice: ${this.invoiceList[0].invoiceNo}\nList of Items:\n`;
+        this.invoiceItemList.forEach(item => receipt += `${item.itemNo} x ${item.quantity} units\n`);
+        receipt += "\n\n\n________________________\n     Signature\n\n\n";
+
+        NyxPrinter.isReady().then(res => {
+          if (res.connected) {
+            NyxPrinter.printText({ text: receipt });
+          } else {
+            console.error('Printer service not ready yet');
+          }
+        });
       },
       error: (error) => console.log("Ionic Error requesting: ", error.message)
     });
