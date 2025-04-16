@@ -12,7 +12,7 @@ import { SearchService } from 'src/app/services/search/search.service';
 import { PopoverController } from "@ionic/angular";
 import { DataService } from '../../services/database/data.service';
 import { inventory } from 'src/app/models/inventory';
-import { PaymentComponent } from '../../payment/payment.component';
+import { PaymentComponent } from '../../components/payment/payment.component';
 
 
 @Component({
@@ -208,7 +208,8 @@ export class HomePage implements OnInit {
      // Reset cart after successful payment
      this.currentQuantityArr = new Array(this.invoiceItems.length).fill(0);
      this.calculateSubtotal();
-
+    await this.storage.loadData();
+    
     // if (this.cartItems.length > 0) {
 
     //     // Prepare frequency update list

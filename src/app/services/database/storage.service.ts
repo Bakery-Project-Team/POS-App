@@ -197,7 +197,7 @@ export class StorageService {
 
     // Refreshes All Data
     async loadData() {
-        await Promise.all([this.loadAllInvoices(), this.loadAllInvoiceItems(), this.loadAllSales()]);
+        await Promise.all([this.loadAllInvoices(), this.loadAllInvoiceItemsByFrequency(), this.loadAllSales()]);
         this.isDatabaseReady.next(true);
     }
 

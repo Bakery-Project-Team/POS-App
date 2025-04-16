@@ -1,10 +1,7 @@
 <ion-tabs>
-  <ion-tab-bar class="bottom-tab-bar">
+  <ion-tab-bar class="bottom-tab-bar" color="tertiary">
     <ion-tab-button tab="home">
       <ion-icon [name]="selectedBottomTab === 'home' ? 'home' : 'home-outline'"></ion-icon>
-    </ion-tab-button>
-    <ion-tab-button tab="search" (click)="toggleSearch()">
-      <ion-icon [name]="selectedBottomTab === 'search' ? 'search' : 'search-outline'"></ion-icon>
     </ion-tab-button>
     <ion-tab-button tab="upload">
       <ion-icon [name]="selectedBottomTab === 'upload' ? 'cloud-upload' : 'cloud-upload-outline'"></ion-icon>

@@ -70,10 +70,6 @@ ion-card {
   border-radius: 16px;
 }
 
-.invalid-input {
-  border: 2px solid red;
-  border-radius: 4px;
-}
 
 .quantity-toggle {
   display: flex;
@@ -92,4 +88,21 @@ ion-card {
   --padding-end: 0;
   width: 35px;
   height: 35px;
+}
+
+ion-card-title {
+  text-align: center;
+}
+
+.heading-row {
+  padding-top: 24px;
+}
+
+.quantity-col {
+  text-align: center;
+}
+
+.invalid-input {
+  border: 2px solid red;
+  border-radius: 4px;
 }

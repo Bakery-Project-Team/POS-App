@@ -10,7 +10,7 @@
 </ion-header>
 
 <ion-content>
-  <ion-card>
+  <ion-card color="tertiary">
     <ion-card-header>
       <ion-card-title>Total Amount: ${{ total.toFixed(2) }}</ion-card-title>
     </ion-card-header>
@@ -29,7 +29,7 @@
 
 
       <div *ngIf="paymentMethod === 'cash'" class="ion-padding">
-        <ion-item>
+        <ion-item >
           <ion-label position="stacked">Cash Amount</ion-label>
           <ion-input 
             type="number" 
@@ -41,12 +41,12 @@
 
         <ion-item *ngIf="change >= 0">
           <ion-label>Change Due</ion-label>
-          <ion-note slot="end" color="primary">${{ change.toFixed(2) }}</ion-note>
+          <ion-note slot="end" color="primary" color="tertiary">${{ change.toFixed(2) }}</ion-note>
         </ion-item>
       </div>
 
       <div class="ion-padding">
-        <ion-button expand="block" (click)="confirmPayment()" [disabled]="paymentMethod === 'cash' && cashAmount < total">
+        <ion-button expand="block" (click)="confirmPayment()" [disabled]="paymentMethod === 'cash' && cashAmount < total" color="success">
           Confirm Payment
         </ion-button>
       </div>
