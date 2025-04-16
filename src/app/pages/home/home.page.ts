@@ -11,6 +11,7 @@ import { ViewChild } from '@angular/core';
 import { SearchService } from 'src/app/services/search/search.service';
 import { PopoverController } from "@ionic/angular";
 import { DataService } from '../../services/database/data.service';
+import { inventory } from 'src/app/models/inventory';
 
 @Component({
   selector: 'app-home',
@@ -20,15 +21,10 @@ import { DataService } from '../../services/database/data.service';
   imports: [IonicModule, CommonModule, FormsModule],
 })
 
- export class HomePage implements OnInit {
+export class HomePage implements OnInit {
   invoices!: Invoice[];
   invoiceItems!: InvoiceItem[];
-
-   cartItems: InvoiceItem[] = [];
-   subTotal: number = 0;
-   currOrderNo: number = 0;
-   invoiceItemFrequencies: Map<number, number> = new Map();
-   sortedInvoiceItems: InvoiceItem[] = [];
+  salesList!: inventory[];
 
   subTotal: number = 0;
   currOrderNo: number = 0;
@@ -43,17 +39,36 @@ import { DataService } from '../../services/database/data.service';
 
 
   async ngOnInit() {
+    console.log(this.storage.loadAllInvoiceItemsByFrequency());
+
     this.storage.invoiceList.subscribe(async data => {
       this.invoices = data;
-    })
+    });
 
     this.storage.invoiceItemList.subscribe(async data => {
       this.invoiceItems = data;
 
       this.itemQuantityArr = this.invoiceItems.map(item => item.quantity);
       this.currentQuantityArr = new Array(this.invoiceItems.length).fill(0);
-    })
+
+      this.storage.salesList.subscribe(async data => {
+        this.salesList = data;
+
+        this.invoiceItems.forEach((invoiceItem, index) => {
+          const totalSalesQuantity = this.salesList
+            .filter(sale => sale.itemNo === invoiceItem.itemNo && sale.orderNo === invoiceItem.orderNo)
+            .reduce((sum, sale) => sum + sale.quantity, 0);
+
+          this.itemQuantityArr[index] -= totalSalesQuantity;
+          if (this.itemQuantityArr[index] < 0) {
+            this.itemQuantityArr[index] = 0;
+          }
+        })
+      });
+    });
   }
+
+
 
   // async loadAllInvoiceItems() {
   //   try{
@@ -123,7 +138,7 @@ import { DataService } from '../../services/database/data.service';
   validateInput(index: number) {
     const max = this.itemQuantityArr[index];
     let value = this.currentQuantityArr[index];
-  
+
     if (value < 0) {
       this.currentQuantityArr[index] = 0;
     } else if (value > max) {
@@ -160,6 +175,15 @@ import { DataService } from '../../services/database/data.service';
 
     await this.storage.addSale(saleRecords);
     console.log('After: ', await this.storage.getSales())
+
+    const freqUpdates = this.cartItems.map(cartItem => ({
+      item_number: cartItem.itemNo,
+      frequency: 1,
+      quantity: cartItem.selectedQuantity
+    }));
+
+    await this.storage.addFrequencies(freqUpdates);
+    console.log('Frequencies updated successfully.');
 
     // if (this.cartItems.length > 0) {
 
