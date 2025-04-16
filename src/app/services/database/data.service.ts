@@ -14,6 +14,7 @@ export class DataService {
   private customerList: Customer[] = [];
   private invoiceItemList: InvoiceItem[] = [];
   private invoiceList: Invoice[] = [];
+  private orderNo: number = 0;
 
   constructor(private storage: StorageService, private http: HttpClient) {}
 
@@ -37,7 +38,10 @@ export class DataService {
           await this.pushInvoiceItem(record);
         });
     
-        await this.store();
+        await this.storage.addInvoices(this.invoiceList);
+        await this.storage.addInvoiceItems(this.invoiceItemList);
+        this.orderNo = this.invoiceList[0].orderNo;
+        await this.storage.saveMetadata('order_number', this.orderNo.toString());
       },
       error: (error) => console.log("Ionic Error requesting: ", error.message)
     });
@@ -63,33 +67,27 @@ export class DataService {
 
   pushInvoice(invoice: any) {
     this.invoiceList.push({
-      'invoiceNo': invoice.attributes.invoiceno, //
-      'orderNo': invoice.attributes.orderno, //
-      'custNo': invoice.attributes.custno, //
-      'routeNo': invoice.attributes.routeno, //
-      'standingDay': invoice.attributes.standing_day, //
-      'invoiceDate': invoice.attributes.invoicedate, //
-      'generate': invoice.attributes.generate, //
-      'generalNote': invoice.attributes.generalnote ?? "", //
-      'custDiscount': invoice.attributes.custdiscount, //
-      'taxRate': invoice.attributes.taxrate, //
-      'terms': invoice.attributes.terms ?? "", //
-      'totalDiscount': invoice.attributes.totaldiscount, //
-      'totalDiscount_adjdown': invoice.attributes.totaldiscount_adjdown, //
-      'totalDiscount_adjup': invoice.attributes.totaldiscount_adjup, //
-      'totalItems': invoice.attributes.totalitems, //
-      'totalItems_adjdown': invoice.attributes.totalitems_adjdown, //
-      'totalItems_adjup': invoice.attributes.totalitems_adjup, //
-      'totalVat': invoice.attributes.totalvat, //
+      'invoiceNo': invoice.attributes.invoiceno,
+      'orderNo': invoice.attributes.orderno,
+      'custNo': invoice.attributes.custno,
+      'routeNo': invoice.attributes.routeno,
+      'standingDay': invoice.attributes.standing_day,
+      'invoiceDate': invoice.attributes.invoicedate,
+      'generate': invoice.attributes.generate,
+      'generalNote': invoice.attributes.generalnote ?? "",
+      'custDiscount': invoice.attributes.custdiscount,
+      'taxRate': invoice.attributes.taxrate,
+      'terms': invoice.attributes.terms ?? "",
+      'totalDiscount': invoice.attributes.totaldiscount,
+      'totalDiscount_adjdown': invoice.attributes.totaldiscount_adjdown,
+      'totalDiscount_adjup': invoice.attributes.totaldiscount_adjup,
+      'totalItems': invoice.attributes.totalitems,
+      'totalItems_adjdown': invoice.attributes.totalitems_adjdown,
+      'totalItems_adjup': invoice.attributes.totalitems_adjup,
+      'totalVat': invoice.attributes.totalvat,
       'totalVat_adjdown': invoice.attributes.totalvat_adjdown,
       'totalVat_adjup': invoice.attributes.totalvat_adjup
     });
   }
-
-  async store() {
-    await this.storage.addInvoices(this.invoiceList);
-    await this.storage.addInvoiceItems(this.invoiceItemList);
-  }
-
 
 }

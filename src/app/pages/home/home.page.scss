@@ -68,7 +68,6 @@ ion-icon {
 
 ion-card {
   border-radius: 16px;
-  background-color: #273746;
 }
 
 .invalid-input {
@@ -81,4 +80,16 @@ ion-card {
   max-height: 100%;
   align-items: center;
   gap: 10px;
+}
+
+.cart-button {
+  width: auto;
+}
+
+.cart-button {
+  --border-radius: 50%;
+  --padding-start: 0;
+  --padding-end: 0;
+  width: 35px;
+  height: 35px;
 }

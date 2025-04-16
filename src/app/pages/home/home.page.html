@@ -59,31 +59,45 @@
 </ion-content>
 
 <ion-content>
-<!-- Summary Section -->
-<ion-card class="summary-card">
-  <ion-card-header>
-    <ion-card-title>Summary</ion-card-title>
-  </ion-card-header>
-  <ion-card-content>
-    <ion-list lines="full">
-      <ion-item *ngFor="let item of cartItems; let i = index">
-        <ion-label>
-          <h2>Item #{{ item.itemNo }}</h2>
-          <p>{{ item.partNo }}</p>
-        </ion-label>
-        <ion-note slot="end">${{ item.price * item.selectedQuantity | number:'1.2-2' }}</ion-note>
-      </ion-item>
+  <!-- Summary Section -->
+  <ion-card class="summary-card">
+    <ion-card-header>
+      <ion-card-title>Summary</ion-card-title>
+    </ion-card-header>
+
+    <ion-card-content>
+      <ion-grid>
+        <ion-row *ngFor="let item of cartItems; let i = index">
+          <ion-col class="item-info">
+            <div><b>{{ item.itemNo }}</b></div>
+            <div>{{ item.partNo }}</div>
+            <div>${{ item.price.toFixed(2) }}</div>
+          </ion-col>
+
+          <ion-col>
+            <div class="quantity-toggle">
+              <ion-button size="small" (click)="removeFromCart(i)">
+                <ion-icon name="remove-circle-outline"></ion-icon>
+              </ion-button>
+
+              <ion-label>{{currentQuantityArr[i]}}</ion-label>
+
+              <ion-button size="small" (click)="addToCart(i)">
+                <ion-icon name="add-circle-outline"></ion-icon>
+              </ion-button>
+            </div>
+          </ion-col>
+        </ion-row>
+      </ion-grid>
+
       <ion-item>
         <ion-label><strong>Sub Total</strong></ion-label>
         <ion-note slot="end"><strong>$TTD{{ subTotal | number:'1.2-2' }}</strong></ion-note>
       </ion-item>
-    </ion-list>
-  </ion-card-content>
-</ion-card>
+    </ion-card-content>
+
+  </ion-card>
 </ion-content>
 
-  
-  <ion-button (click)="confirmSale()" expand="block" color="primary" class="confirm-button"> Confirm Sale</ion-button>
+<ion-button (click)="confirmSale()" expand="block" color="primary" class="confirm-button"> Confirm Sale</ion-button>
 <!-- Item List -->
-
-
