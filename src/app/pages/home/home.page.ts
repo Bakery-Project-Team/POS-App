@@ -12,6 +12,8 @@ import { SearchService } from 'src/app/services/search/search.service';
 import { PopoverController } from "@ionic/angular";
 import { DataService } from '../../services/database/data.service';
 import { inventory } from 'src/app/models/inventory';
+import { PaymentComponent } from '../../payment/payment.component';
+
 
 @Component({
   selector: 'app-home',
@@ -99,7 +101,7 @@ export class HomePage implements OnInit {
   // } catch (error) {
   //   console.error('Error loading invoice data:', error);
   // }
-
+ 
 
 
 
@@ -163,6 +165,24 @@ export class HomePage implements OnInit {
   }
 
   async confirmSale() {
+
+    if (this.cartItems.length === 0) {
+      return;
+    }
+  
+    const modal = await this.modalCtrl.create({
+      component: PaymentComponent,
+      componentProps: {
+        total: this.subTotal
+      }
+    });
+  
+    await modal.present();
+  
+    const { data } = await modal.onWillDismiss();
+    
+    if (data?.paid) {
+
     console.log('Before: ', await this.storage.getSales())
 
     console.log('Cart Items to Save: ', this.cartItems);
@@ -184,6 +204,10 @@ export class HomePage implements OnInit {
 
     await this.storage.addFrequencies(freqUpdates);
     console.log('Frequencies updated successfully.');
+
+     // Reset cart after successful payment
+     this.currentQuantityArr = new Array(this.invoiceItems.length).fill(0);
+     this.calculateSubtotal();
 
     // if (this.cartItems.length > 0) {
 
@@ -219,6 +243,7 @@ export class HomePage implements OnInit {
     //     console.error('Error confirming sale:', error);
     //   }
     // }
+  }
   }
 
 }
